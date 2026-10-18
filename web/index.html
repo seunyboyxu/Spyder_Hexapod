@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spyder · Calibration bench</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="./"
+        ><span class="brand-mark">✳</span> SPYDER<span class="slash">/</span
+        ><span class="brand-sub">CONTROL LAB</span></a
+      ><span class="hardware">UNO · SENSOR SHIELD V5 · 12 × SG90</span>
+    </header>
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">FOUR-LEG TEST RIG / 01</p>
+          <h1>Calibration bench<span>.</span></h1>
+          <p class="subtitle">
+            One joint at a time. Find your limits, build a stance.
+          </p>
+        </div>
+        <div class="intro-note">
+          COMMAND PULSES, NOT MEASURED POSITIONS<br /><strong
+            >Outputs stay detached on reset.</strong
+          >
+        </div>
+      </section>
+      <section class="connection-bar" aria-label="Connection">
+        <div>
+          <span class="dot" id="connection-dot"></span
+          ><strong id="connection">Disconnected</strong
+          ><span id="motion-status">No device authority</span>
+        </div>
+        <div class="connection-actions">
+          <button id="connect" class="primary">Connect Uno</button
+          ><button id="demo">Try demo</button
+          ><button id="disconnect" disabled>Disconnect</button>
+        </div>
+      </section>
+      <div id="notice" role="status" aria-live="polite">
+        Connect over USB in desktop Chrome or Edge, or explore the simulated
+        demo.
+      </div>
+      <div class="workspace">
+        <aside>
+          <section class="panel">
+            <p class="eyebrow">BEFORE YOU ARM</p>
+            <h2>Support the body.</h2>
+            <p>
+              First attachment can jump. Check the horn screws, backing pivots
+              and free joint travel. Use a suitable external servo supply with
+              common ground.
+            </p>
+            <label class="check"
+              ><input id="supported" type="checkbox" />
+              <span
+                >The body is supported and I checked joint retention.</span
+              ></label
+            >
+          </section>
+          <section class="panel stance">
+            <p class="eyebrow">POSE WORKSPACE</p>
+            <h2>A stance you calibrated.</h2>
+            <p id="pose-status">No standing pose captured.</p>
+            <label
+              >Movement speed <span class="unit">µs/s</span
+              ><input
+                id="speed"
+                type="number"
+                value="50"
+                min="10"
+                max="100"
+                step="10" /></label
+            ><button id="capture" class="wide" disabled>
+              Capture standing pose</button
+            ><button id="stand" class="primary wide" disabled>
+              Move to standing
+            </button>
+            <p class="fine">
+              A saved pose does not verify balance or grip. Keep support in
+              place during first tests.
+            </p>
+          </section>
+          <section class="panel">
+            <p class="eyebrow">PHYSICAL LABELS</p>
+            <label
+              >Body front / reference<input
+                id="front"
+                maxlength="80"
+                placeholder="e.g. USB connector side"
+            /></label>
+            <p class="fine">
+              Leg numbers follow wire order. Record the four occupied mounting
+              stations in the leg labels.
+            </p>
+          </section>
+        </aside>
+        <section class="joint-workspace" aria-label="Leg calibration">
+          <div class="section-heading">
+            <h2>Joint calibration</h2>
+            <span>12 SIGNALS / D2—D13</span>
+          </div>
+          <p class="fine">
+            Configure travel with all outputs released. Then arm each joint at
+            an explicit starting pulse. Nudge uses your chosen direction.
+          </p>
+          <div id="legs" class="legs"></div>
+        </section>
+      </div>
+      <section class="panel profiles">
+        <div>
+          <p class="eyebrow">KEEP YOUR CALIBRATION</p>
+          <h2>Device memory & profiles</h2>
+          <p>
+            Release outputs before writing EEPROM or importing settings. No
+            movement is started by loading.
+          </p>
+        </div>
+        <div class="profile-actions">
+          <button id="save" disabled>Save to Uno</button
+          ><button id="load" disabled>Load from Uno</button
+          ><button id="export" disabled>Export JSON</button
+          ><label class="file-button"
+            >Choose JSON<input
+              id="import-file"
+              type="file"
+              accept="application/json,.json" /></label
+          ><button id="apply-profile" disabled>Apply imported profile</button>
+        </div>
+      </section>
+      <footer>
+        <span>SPYDER / ENGINEERING BENCH</span
+        ><span>FOUR LEGS TODAY. CALIBRATION BEFORE LOAD.</span>
+      </footer>
+    </main>
+    <div class="stop-bar" role="region" aria-label="Motion controls">
+      <div>
+        <strong id="output-count">0 / 12 attached</strong
+        ><span>STOP holds torque. RELEASE may let the robot drop.</span>
+      </div>
+      <div class="stop-actions">
+        <button id="resume" disabled>Resume controls</button
+        ><button id="release" disabled>Release outputs</button
+        ><button id="stop" disabled>STOP · hold</button>
+      </div>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

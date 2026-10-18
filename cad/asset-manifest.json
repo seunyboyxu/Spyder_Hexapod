@@ -1,0 +1,117 @@
+{
+  "source_repository": "https://github.com/seunyboyxu/Spyder_Hexapod",
+  "assets": [
+    {
+      "path": "cad/print/stl/01_Chassis_x1.stl",
+      "original_path": "01_Chassis_x1.stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 1203884,
+      "sha256": "00121f9ad1d564b36e650c8ddae95c500665fe457675b25a2710e5978b650261",
+      "triangles": 24076,
+      "axis_extents_file_units": [
+        136.0,
+        157.039276,
+        31.0
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/print/stl/02_Plain_lid_x1.stl",
+      "original_path": "02_Plain_lid).stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 153484,
+      "sha256": "b28cc64a87310594d2cbf7274f91e15b0a05f07a165fee3b2fc4a964f11e8ad8",
+      "triangles": 3068,
+      "axis_extents_file_units": [
+        136.0,
+        157.039276,
+        2.5
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/print/stl/04_Hip_rear_pivot_v2_x6.stl",
+      "original_path": "04_Hip_rear_pivot_v2_x6.stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 319816,
+      "sha256": "eecfe70161d47010aa033d26d7b562833f43514b335e5499373eec475be4392a",
+      "triangles": 1206,
+      "axis_extents_file_units": [
+        43.346497,
+        38.104301,
+        38.104279
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/print/stl/05_Thigh_x6.stl",
+      "original_path": "05_Thigh_x6.stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 982499,
+      "sha256": "5901cd417f6549f051cb988fc662fe7b3603ff89494a49e262b4842e04216351",
+      "triangles": 3308,
+      "axis_extents_file_units": [
+        53.254013,
+        29.273529,
+        19.829035
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/print/stl/06_Foot_x6.stl",
+      "original_path": "06_Foot_x6.stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 254272,
+      "sha256": "d188e566d7824af20347e1cc9baf521f18bce42ffc764261c8198e94d81734de",
+      "triangles": 866,
+      "axis_extents_file_units": [
+        38.264118,
+        77.157988,
+        23.833397
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/print/stl/Backing-pivot-original-PRINT.stl",
+      "original_path": "Backing-pivot-original-PRINT.stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 184302,
+      "sha256": "07537aaecfc3e13d9c73cc9e7886614a172ee5dd0f42152f0a7ab84f4f6e37c6",
+      "triangles": 768,
+      "axis_extents_file_units": [
+        12.1,
+        22.5,
+        4.175
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/print/stl/Fixed-screw-mount-PRINT.stl",
+      "original_path": "Fixed-screw-mount-PRINT.stl",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 64184,
+      "sha256": "54f90a5d6b3d5a79b8c123ff8c8b4acc6e1f60c87e2b3de948ed376e35d6d8d7",
+      "triangles": 1282,
+      "axis_extents_file_units": [
+        30.0,
+        36.0,
+        38.370655
+      ],
+      "units_note": "STL has no unit metadata; design dimensions indicate millimetres. Extents are in export orientation, not joint link lengths."
+    },
+    {
+      "path": "cad/fusion/Spyder-complete-six-leg-assembly.f3d",
+      "original_path": "Spyder-complete-six-leg-assembly.f3d",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 17859874,
+      "sha256": "069e1d0e6d7f2f251057c6d7e5e4ed9d5d599fb7a80243d27e00b2ef1a9bbe9d"
+    },
+    {
+      "path": "cad/fusion/Spyder-leg-fixed-screw-mount.f3d",
+      "original_path": "Spyder-leg-fixed-screw-mount.f3d",
+      "source_commit": "dc7ff4ee1c819b7dd2e5d5e30b2fe3dbf9d24be2",
+      "bytes": 1307595,
+      "sha256": "d008cecb526a119418c31b4516ebf5cd2b088f6915e2c1c8e07e31c1803d1468"
+    }
+  ]
+}

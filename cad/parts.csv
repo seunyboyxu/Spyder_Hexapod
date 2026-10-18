@@ -1,0 +1,8 @@
+part_id,stl_path,intended_quantity_four_legs,intended_quantity_six_legs,fusion_path,fusion_component,evidence_or_gap
+chassis,cad/print/stl/01_Chassis_x1.stl,1,1,cad/fusion/Spyder-complete-six-leg-assembly.f3d,Chassis,component name + handover; no round-trip geometry comparison
+lid,cad/print/stl/02_Plain_lid_x1.stl,1,1,cad/fusion/Spyder-complete-six-leg-assembly.f3d,Plain_editable_lid,component name + handover; original STL filename corrected
+fixed_mount,cad/print/stl/Fixed-screw-mount-PRINT.stl,4,6,cad/fusion/Spyder-complete-six-leg-assembly.f3d,Fixed_screw_mount,component name + handover; separate leg archive is an earlier editing source
+hip_v2,cad/print/stl/04_Hip_rear_pivot_v2_x6.stl,4,6,cad/fusion/Spyder-complete-six-leg-assembly.f3d,Hip_rear_pivot_v2,"component name + v2 revision; earlier leg archive has original Hips-a, not v2"
+thigh,cad/print/stl/05_Thigh_x6.stl,4,6,cad/fusion/Spyder-complete-six-leg-assembly.f3d,Thigh-a,component name + handover; source-derived faceted geometry
+foot,cad/print/stl/06_Foot_x6.stl,4,6,cad/fusion/Spyder-complete-six-leg-assembly.f3d,Foot-a,component name + handover; source-derived faceted geometry
+backing_pivot,cad/print/stl/Backing-pivot-original-PRINT.stl,4,6,,,no Fusion counterpart found; handover mentions a separate STEP package not uploaded
