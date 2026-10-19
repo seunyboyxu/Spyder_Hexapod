@@ -18,7 +18,7 @@ public:
   }
   void attach(uint8_t i, uint8_t pin, uint16_t pulse) override {
     servos[i].writeMicroseconds(pulse);
-    servos[i].attach(pin, 1000, 2000);
+    servos[i].attach(pin, BenchMinimumPulse, BenchMaximumPulse);
   }
   void write(uint8_t i, uint16_t pulse) override {
     servos[i].writeMicroseconds(pulse);
@@ -68,7 +68,7 @@ void setup() {
   Serial.begin(115200);
   controller.begin(millis());
   settings.load();
-  Serial.println(F("BOOT SPYDER 2"));
+  Serial.println(F("BOOT SPYDER 3"));
 }
 void loop() {
   controller.tick(millis());

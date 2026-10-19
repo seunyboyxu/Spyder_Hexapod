@@ -31,7 +31,7 @@ python3 scripts/build-avr.py
 
 The Linux x86-64 fallback needs `curl`, `gpg`, the Debian archive keyring and `dpkg-deb`. It validates Debian signatures and package checksums, extracts tools under ignored `.tools/`, and pins Servo to its 1.2.2 commit. It uses AVR GCC 14.2 and Arduino AVR core 1.8.7, a separate configuration from PlatformIO. Output: `.pio/local-uno/spyder_uno.hex`. No script uploads or operates motors.
 
-For actual MCU waveform regressions, install the Linux simavr development library and libelf runtime (Debian packages `libsimavr-dev` and `libelf1t64`, or your distribution equivalents), then run `python3 scripts/test-avr.py` after the AVR build. For packages extracted rather than installed, pass `--simavr-root /path/to/package-root`. The runner executes 24 scenarios and writes edge traces under `.pio/avr-tests/`. This simulates ideal electrical conditions; it cannot reproduce USB supply dips or motor mechanics.
+For actual MCU waveform regressions, install the Linux simavr development library and libelf runtime (Debian packages `libsimavr-dev` and `libelf1t64`, or your distribution equivalents), then run `python3 scripts/test-avr.py` after the AVR build. For packages extracted rather than installed, pass `--simavr-root /path/to/package-root`. The runner executes 25 scenarios, including a complete isolated unloaded sweep and writes edge traces under `.pio/avr-tests/`. This simulates ideal electrical conditions; it cannot reproduce USB supply dips or motor mechanics.
 
 See [verification results](verification.md) for exercised checks and remaining hardware work. The selected STL and native Fusion assets are now under [cad/](../cad/README.md); fitted geometry and real motion remain unverified.
 

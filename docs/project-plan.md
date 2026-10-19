@@ -1,10 +1,11 @@
 # Project plan
 
-Updated **18 October 2026**. This is the continuation roadmap; the [16 October software implementation plan](superpowers/plans/2026-10-16-uno-calibration.md) is a historical design record. All remaining task owners are unassigned.
+Updated **19 October 2026**. This is the continuation roadmap; the [16 October software implementation plan](superpowers/plans/2026-10-16-uno-calibration.md) is a historical design record. All remaining task owners are unassigned.
 
 ## Milestone 1 — retain a reproducible calibration baseline
 
 - [x] Implement revision 2 Uno firmware, Web Serial console, demo and persistence.
+- [x] Add revision 3 unloaded individual centering and single-pass sweep using the owner-selected 1000–2000 µs defaults, preserving leg limits.
 - [x] Reproduce/fix release waveform, urgent-control, timing, heartbeat and initial-pulse issues.
 - [x] Retain native, integration, browser and actual-AVR waveform regressions.
 - [x] Organize the owner's STL/Fusion files with provenance and a part map.

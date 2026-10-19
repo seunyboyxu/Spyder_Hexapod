@@ -6,7 +6,7 @@ Start with [current state](project-state.md), then [project plan](project-plan.m
 
 1. Inspect the current branch and working tree; preserve changes. Read [hardware/bring-up](bring-up.md) before attaching power.
 2. Explore the browser demo with no hardware: from the repository root run `python3 -m http.server 8000 --bind 127.0.0.1 --directory web`, open `http://localhost:8000` in desktop Chrome/Edge, then select **Try demo**. Node/npm is needed for development tests, not to serve the console.
-3. Run [development checks](development.md). Firmware and UI must both use `SPYDER 2`; JSON/EEPROM stay version 1. Do not automatically upload firmware or move motors as a test step.
+3. Run [development checks](development.md). Firmware and UI must both use `SPYDER 3`; JSON/EEPROM stay version 1. Do not automatically upload firmware or move motors as a test step.
 4. Find the selected [STLs and native Fusion sources](../cad/README.md). Use the part map; six-leg CAD is not evidence of fitted six-leg electronics or functioning firmware.
 5. Take the next incomplete item in the [project plan](project-plan.md). The immediate hardware prerequisites are external servo power and one retained, freely moving joint.
 

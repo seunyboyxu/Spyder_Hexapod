@@ -3,7 +3,7 @@
 This blank template contains no validated angles or pulse values. Keep an exported JSON profile alongside the completed record; never treat defaults as measured travel.
 
 - Date/operator:
-- Firmware Git commit / console commit (both SPYDER 2):
+- Firmware Git commit / console commit (both SPYDER 3):
 - Uno and shield revision:
 - External supply model, voltage/current rating, wiring/isolation check:
 - Voltage/current measured at rest / staged load:

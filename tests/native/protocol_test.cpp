@@ -37,9 +37,9 @@ int main() {
       p.feed(ch, 0);
     return sink.text;
   };
-  assert(send("1 HELLO") == "SPYDER 2\nACK 1\n");
+  assert(send("1 HELLO") == "SPYDER 3\nACK 1\n");
   auto status = send("2 STATUS");
-  assert(status.find("BEGIN 2 0 0\n") == 0 &&
+  assert(status.find("BEGIN 2 0 0 -1 0\n") == 0 &&
          status.find("JOINT 2 11 13 ") != std::string::npos &&
          status.find("END 2\nACK 2\n") != std::string::npos);
   for (auto s : {"3 ARM", "3 ARM -1 1500", "3 ARM 12 1500", "3 ARM 0 1500x",
@@ -74,6 +74,19 @@ int main() {
   assert(!c.config().standingValid);
   assert(send("20 POSE 1500 1500 1500 1500 1500 1500 1500 1500 1500 1500 1500 "
               "1500") == "ACK 20\n");
+  assert(send("21 CENTER 4") == "ACK 21\n");
+  assert(send("22 STATUS").find("BEGIN 22 0 0 4 0\n") == 0);
+  assert(send("23 SWEEP 4 1000 2000 100") == "ACK 23\n");
+  assert(c.sweepPhase() == 1 && c.joint(4).target == 1000);
+  for (auto cmd : {"24 CENTER -1", "24 CENTER 12", "24 CENTER 1 2",
+                   "24 SWEEP 4 1500 2000 100", "24 SWEEP 4 1000 2000 101",
+                   "24 SWEEP 4 1000 2000 50 extra"})
+    assert(send(cmd).find("ERR ") == 0);
+  assert(send("25 ARM 1 1500") == "ERR 25 STATE\n");
+  assert(send("26 SAVE") == "ERR 26 STATE\n");
+  assert(send("27 STOP") == "ACK 27\n" && c.sweepPhase() == 0);
+  assert(send("28 RESUME") == "ACK 28\n" && c.sweepPhase() == 0);
+  assert(send("29 RELEASE") == "ACK 29\n" && c.benchJoint() == -1);
   std::puts("protocol: framing, all commands, malformed/bounds/overflow, STOP, "
             "storage dispatch PASS (7 groups)");
 }

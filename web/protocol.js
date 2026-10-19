@@ -1,4 +1,8 @@
 const integer = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
+// User-selected default unloaded envelope; not a measured angular range.
+export const BenchMinimumPulse = 1000;
+export const BenchMaximumPulse = 2000;
+export const BenchCenterPulse = 1500;
 const requireValue = (ok, message = "Invalid value") => {
   if (!ok) throw new Error(message);
 };
@@ -41,6 +45,8 @@ export function encodeCommand(id, verb, args = []) {
     POSE: 12,
     SAVE: 0,
     LOAD: 0,
+    CENTER: 1,
+    SWEEP: 4,
   };
   requireValue(
     Object.hasOwn(counts, verb) &&
@@ -48,12 +54,20 @@ export function encodeCommand(id, verb, args = []) {
       args.every(Number.isInteger),
     "Invalid command",
   );
-  if (["ARM", "MOVE", "CONFIG"].includes(verb))
+  if (["ARM", "MOVE", "CONFIG", "CENTER", "SWEEP"].includes(verb))
     requireValue(integer(args[0], 0, 11), "Invalid joint");
   if (["ARM", "MOVE"].includes(verb))
     requireValue(integer(args[1], 1000, 2000), "Invalid pulse");
   if (verb === "MOVE" || verb === "STAND")
     requireValue(integer(args.at(-1), 10, 100), "Invalid speed");
+  if (verb === "SWEEP") {
+    requireValue(
+      integer(args[1], BenchMinimumPulse, BenchCenterPulse - 1) &&
+        integer(args[2], BenchCenterPulse + 1, BenchMaximumPulse),
+      "Invalid sweep endpoints",
+    );
+    requireValue(integer(args[3], 10, 100), "Invalid speed");
+  }
   if (verb === "CONFIG") {
     requireValue([0, 1].includes(args[5]));
     validateJoint({
@@ -78,9 +92,9 @@ export function parseLine(line) {
     type = parts.shift();
   if (type === "SPYDER" || type === "BOOT") {
     requireValue(
-      (type === "SPYDER" && parts.join(" ") === "2") ||
-        (type === "BOOT" && parts.join(" ") === "SPYDER 2"),
-      "Unsupported firmware: upload Spyder revision 2 and reload this console",
+      (type === "SPYDER" && parts.join(" ") === "3") ||
+        (type === "BOOT" && parts.join(" ") === "SPYDER 3"),
+      "Unsupported firmware: upload Spyder revision 3 and reload this console",
     );
     return { type };
   }
@@ -93,7 +107,7 @@ export function parseLine(line) {
     );
     return { type, id: +parts[0], code: parts[1] };
   }
-  const lengths = { ACK: 1, BEGIN: 3, JOINT: 12, END: 1 };
+  const lengths = { ACK: 1, BEGIN: 5, JOINT: 12, END: 1 };
   requireValue(
     parts.length === lengths[type] && parts.every((p) => /^-?\d+$/.test(p)),
     "Malformed response",
@@ -102,8 +116,22 @@ export function parseLine(line) {
     id = n[0];
   requireValue(integer(id, 1, 65535));
   if (type === "BEGIN") {
-    requireValue([0, 1].includes(n[1]) && [0, 1].includes(n[2]));
-    return { type, id, stopped: !!n[1], standingValid: !!n[2] };
+    requireValue(
+      [0, 1].includes(n[1]) &&
+        [0, 1].includes(n[2]) &&
+        integer(n[3], -1, 11) &&
+        integer(n[4], 0, 3) &&
+        (n[3] >= 0 || n[4] === 0) &&
+        (!n[1] || n[4] === 0),
+    );
+    return {
+      type,
+      id,
+      stopped: !!n[1],
+      standingValid: !!n[2],
+      benchJoint: n[3],
+      sweepPhase: n[4],
+    };
   }
   if (type === "JOINT") {
     const [
@@ -142,13 +170,10 @@ export function parseLine(line) {
     validateJoint(joint);
     // Detached command history may be outside newly narrowed limits; it is not an active output.
     requireValue(
-      [commanded, target, standing].every((p) => integer(p, 1000, 2000)),
+      [commanded, target].every((p) =>
+        integer(p, BenchMinimumPulse, BenchMaximumPulse),
+      ) && integer(standing, 1000, 2000),
     );
-    if (attached)
-      requireValue(
-        integer(commanded, minimum, maximum) &&
-          integer(target, minimum, maximum),
-      );
     return { type, id, joint };
   }
   return { type, id };
@@ -169,6 +194,17 @@ export class Snapshot {
     requireValue(this.begin, "Missing BEGIN");
     if (message.type === "JOINT") {
       requireValue(!this.rows.has(message.joint.index), "Duplicate joint");
+      const j = message.joint;
+      if (j.attached) {
+        const isBench = this.begin.benchJoint === j.index;
+        const minimum = isBench ? BenchMinimumPulse : j.minimum;
+        const maximum = isBench ? BenchMaximumPulse : j.maximum;
+        requireValue(
+          integer(j.commanded, minimum, maximum) &&
+            integer(j.target, minimum, maximum),
+          "Active pulse outside limits",
+        );
+      }
       this.rows.set(message.joint.index, message.joint);
       return null;
     }
@@ -179,8 +215,21 @@ export class Snapshot {
     const state = {
       stopped: this.begin.stopped,
       standingValid: this.begin.standingValid,
+      benchJoint: this.begin.benchJoint,
+      sweepPhase: this.begin.sweepPhase,
       joints: Array.from({ length: 12 }, (_, i) => this.rows.get(i)),
     };
+    if (state.benchJoint >= 0) {
+      requireValue(
+        !state.standingValid &&
+          state.joints.every((j) =>
+            j.index === state.benchJoint
+              ? j.attached && !j.calibrated
+              : !j.attached,
+          ),
+        "Unloaded test must isolate one unchecked servo",
+      );
+    }
     if (state.standingValid)
       requireValue(
         state.joints.every(

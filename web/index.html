@@ -12,7 +12,7 @@
       <a class="brand" href="./"
         ><span class="brand-mark">✳</span> SPYDER<span class="slash">/</span
         ><span class="brand-sub">CONTROL LAB</span></a
-      ><span class="hardware">UNO · SENSOR SHIELD V5 · 12 × SG90</span>
+      ><span class="hardware">UNO · SENSOR SHIELD V5 · SG90 / MG90D</span>
     </header>
     <main>
       <section class="intro">
@@ -45,6 +45,75 @@
         Connect over USB in desktop Chrome or Edge, or explore the simulated
         demo.
       </div>
+      <section class="panel unloaded-bench" aria-label="Unloaded servo bench">
+        <div class="section-heading">
+          <h2>Unloaded servo bench</h2>
+          <span>ONE SERVO / OFF THE LEG</span>
+        </div>
+        <p>
+          Remove the selected servo from the leg before refitting its horn.
+          Center at nominal 90°, then run one slow pass from center to minimum,
+          maximum, and back to center. Other outputs stay detached.
+        </p>
+        <label class="check"
+          ><input id="unloaded" type="checkbox" /><span
+            >The selected servo is removed from the leg, unloaded, and clear of
+            obstacles.</span
+          ></label
+        >
+        <div class="bench-layout">
+          <div>
+            <label>Selected servo<select id="bench-joint"></select></label
+            ><button id="bench-center" class="primary wide" disabled>
+              Center 90°
+            </button>
+          </div>
+          <div>
+            <div class="bench-range">
+              <label
+                >Minimum (µs)<input
+                  id="bench-minimum"
+                  type="number"
+                  step="1" /></label
+              ><label
+                >Maximum (µs)<input
+                  id="bench-maximum"
+                  type="number"
+                  step="1" /></label
+              ><label
+                >Speed (µs/s)<input
+                  id="bench-speed"
+                  type="number"
+                  min="10"
+                  max="100"
+                  step="1"
+                  value="50"
+              /></label>
+            </div>
+            <button id="bench-sweep" class="wide" disabled>
+              Sweep selected range once
+            </button>
+          </div>
+          <div class="bench-readout">
+            <p id="bench-status" role="status" aria-live="polite">
+              No device authority
+            </p>
+            <p>
+              Commanded <b id="bench-commanded">—</b> µs · Target
+              <b id="bench-target">—</b> µs
+            </p>
+            <p id="bench-envelope" class="fine"></p>
+          </div>
+        </div>
+        <p class="fine" id="bench-center-note"></p>
+        <p class="fine">
+          Actual maximum angle is unknown. Never force a physical stop. Watch
+          the servo; use STOP to hold or Release outputs to detach signals.
+          Resume never restarts a cancelled sweep. Release before selecting
+          another servo. Center clears this servo’s travel-check flag and the
+          standing pose in RAM; leg limits stay unchanged.
+        </p>
+      </section>
       <div class="workspace">
         <aside>
           <section class="panel">

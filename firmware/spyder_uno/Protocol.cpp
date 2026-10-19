@@ -80,8 +80,8 @@ static bool number(const char *s, int32_t &n) {
 }
 void Protocol::status(uint16_t id) {
   char line[112];
-  snprintf(line, sizeof line, "BEGIN %u %u %u\n", id, c_.stopped(),
-           c_.config().standingValid);
+  snprintf(line, sizeof line, "BEGIN %u %u %u %d %u\n", id, c_.stopped(),
+           c_.config().standingValid, c_.benchJoint(), c_.sweepPhase());
   sink_.write(line);
   for (uint8_t i = 0; i < JointCount; ++i) {
     const JointConfig &j = c_.config().joints[i];
@@ -126,7 +126,7 @@ void Protocol::execute(uint32_t now) {
     }
   Result r = Result::Invalid;
   if (!strcmp(verb, "HELLO") && argc == 0) {
-    sink_.write("SPYDER 2\n");
+    sink_.write("SPYDER 3\n");
     r = Result::Ok;
   } else if (!strcmp(verb, "STATUS") && argc == 0) {
     status(id);
@@ -145,6 +145,13 @@ void Protocol::execute(uint32_t now) {
   else if (!strcmp(verb, "ARM") && argc == 2) {
     if (args[0] >= 0 && args[0] < 12 && args[1] >= 0)
       r = c_.arm(args[0], args[1], now);
+  } else if (!strcmp(verb, "CENTER") && argc == 1) {
+    if (args[0] >= 0 && args[0] < JointCount)
+      r = c_.center(args[0], now);
+  } else if (!strcmp(verb, "SWEEP") && argc == 4) {
+    if (args[0] >= 0 && args[0] < JointCount && args[1] >= 0 && args[2] >= 0 &&
+        args[3] >= 0)
+      r = c_.sweep(args[0], args[1], args[2], args[3]);
   } else if (!strcmp(verb, "MOVE") && argc == 3) {
     if (args[0] >= 0 && args[0] < 12 && args[1] >= 0 && args[2] >= 0)
       r = c_.move(args[0], args[1], args[2]);

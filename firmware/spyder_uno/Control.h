@@ -2,6 +2,10 @@
 #include <stdint.h>
 namespace spyder {
 const uint8_t JointCount = 12;
+// User-selected default unloaded envelope; not a measured angular range.
+const uint16_t BenchMinimumPulse = 1000;
+const uint16_t BenchMaximumPulse = 2000;
+const uint16_t BenchCenterPulse = 1500;
 enum class Result : uint8_t {
   Ok,
   Invalid,
@@ -40,6 +44,11 @@ public:
   static uint8_t pin(uint8_t joint) { return joint + 2; }
   Result arm(uint8_t joint, uint16_t pulse, uint32_t now);
   Result move(uint8_t joint, uint16_t pulse, uint16_t speed);
+  Result center(uint8_t joint, uint32_t now);
+  Result sweep(uint8_t joint, uint16_t minimum, uint16_t maximum,
+               uint16_t speed);
+  int8_t benchJoint() const { return benchJoint_; }
+  uint8_t sweepPhase() const { return sweepPhase_; }
   Result configure(uint8_t joint, const JointConfig &config);
   void stop();
   void release();
@@ -62,5 +71,8 @@ private:
   uint16_t speed_[JointCount], remainder_[JointCount];
   uint32_t heartbeat_, lastTick_;
   bool stopped_;
+  int8_t benchJoint_;
+  uint8_t sweepPhase_;
+  uint16_t sweepMinimum_, sweepMaximum_;
 };
 } // namespace spyder

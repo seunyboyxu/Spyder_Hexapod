@@ -54,7 +54,7 @@ test("unexpected boot invalidates pending commands and requires reconnect", asyn
   await s.connect(d);
   d.drop = true;
   const promise = s.command("ARM", [0, 1500]);
-  d.emit("BOOT SPYDER 2");
+  d.emit("BOOT SPYDER 3");
   await assert.rejects(promise);
   assert(!s.ready);
   await assert.rejects(s.command("ARM", [0, 1500]));
@@ -98,7 +98,7 @@ test("fault before write microtask cancels unsent ARM", async () => {
     return originalWrite(line);
   };
   const pending = s.command("ARM", [0, 1500]);
-  d.emit("BOOT SPYDER 2");
+  d.emit("BOOT SPYDER 3");
   await assert.rejects(pending);
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(d.joints[0].attached, 0);

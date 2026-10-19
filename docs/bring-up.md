@@ -16,8 +16,8 @@ Use an external regulated supply at a voltage supported by your actual SG90s, wi
 
 1. Open `firmware/spyder_uno/spyder_uno.ino` in Arduino IDE, keeping its `.h` and `.cpp` files in that directory.
 2. Install Arduino AVR Boards and **Servo 1.2.2**. EEPROM is included in the AVR core.
-3. Select Arduino Uno and your USB port. Upload the revision 2 sketch with servo power disconnected. Replace all browser-console files with the same release and reload the page; mixed revision 1 firmware/revision 2 console is rejected. EEPROM/profile format remains version 1.
-4. Close Serial Monitor/Plotter before the browser connects. For a manual serial check, use 115200 baud and newline termination: `1 HELLO` returns `SPYDER 2` and `ACK 1`. `2 STATUS` shows twelve detached joints after reset. Never send ARM as a connectivity check.
+3. Select Arduino Uno and your USB port. Upload the revision 3 sketch with servo power disconnected. Replace all browser-console files with the same release and reload the page; mixed revision 1/2 firmware with the revision 3 console is rejected. EEPROM/profile format remains version 1.
+4. Close Serial Monitor/Plotter before the browser connects. For a manual serial check, use 115200 baud and newline termination: `1 HELLO` returns `SPYDER 3` and `ACK 1`. `2 STATUS` shows twelve detached joints after reset. Never send ARM as a connectivity check.
 
 Optional PlatformIO upload from your own USB-connected computer after a successful build: `pio run -e uno -t upload`. No upload has been attempted from the cloud.
 
@@ -28,6 +28,8 @@ From the downloaded repository root run `python -m http.server 8000 --bind 127.0
 After connecting with servo power off, confirm detached state and hold. Energise the correctly isolated external servo supply only with the body supported. If resetting/reconnecting is needed, turn servo power off first.
 
 **Try demo** is only a simulation. It does not establish physical wiring, power, positions or load capacity.
+
+For motors removed from their legs, use [Unloaded servo setup](unloaded-servo-calibration.md) to center and sweep one output. This preserves the leg limits but clears its travel check and standing record in RAM. Refit, support the body, then follow the assembled calibration below.
 
 ## 4. Calibrate one servo, then one leg
 

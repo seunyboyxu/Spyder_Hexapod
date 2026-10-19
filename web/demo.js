@@ -1,3 +1,8 @@
+import {
+  BenchMinimumPulse,
+  BenchMaximumPulse,
+  BenchCenterPulse,
+} from "./protocol.js";
 // Interface demonstration only. Native tests exercise the real C++ firmware separately.
 export class DemoTransport {
   constructor() {
@@ -5,6 +10,8 @@ export class DemoTransport {
     this.drop = false;
     this.stopped = true;
     this.pose = false;
+    this.benchJoint = -1;
+    this.sweepPhase = 0;
     this.joints = Array.from({ length: 12 }, (_, i) => ({
       pin: i + 2,
       min: 1400,
@@ -40,6 +47,15 @@ export class DemoTransport {
       );
       j.remainder %= 1000;
       j.pulse += Math.sign(j.target - j.pulse) * step;
+      if (j === this.joints[this.benchJoint] && j.pulse === j.target) {
+        if (this.sweepPhase === 1) {
+          this.sweepPhase = 2;
+          this.move(j, this.sweepMaximum, j.speed);
+        } else if (this.sweepPhase === 2) {
+          this.sweepPhase = 3;
+          this.move(j, BenchCenterPulse, j.speed);
+        } else if (this.sweepPhase === 3) this.sweepPhase = 0;
+      }
     }
   }
   move(j, target, speed) {
@@ -54,6 +70,7 @@ export class DemoTransport {
   }
   hold() {
     this.stopped = true;
+    this.sweepPhase = 0;
     this.joints.forEach((j) => {
       j.target = j.pulse;
       j.remainder = 0;
@@ -67,12 +84,25 @@ export class DemoTransport {
       j = this.joints[a[0]];
     let error = null;
     const detached = this.joints.every((j) => !j.attached);
+    if (verb === "CENTER" || verb === "SWEEP") {
+      if (
+        a.length !== (verb === "CENTER" ? 1 : 4) ||
+        !a.every(Number.isInteger) ||
+        !j
+      ) {
+        this.emit(`ERR ${id} INVALID`);
+        return;
+      }
+      if (Date.now() - this.heartbeat >= 1500) this.hold();
+    }
     switch (verb) {
       case "HELLO":
-        this.emit("SPYDER 2");
+        this.emit("SPYDER 3");
         break;
       case "STATUS":
-        this.emit(`BEGIN ${id} ${+this.stopped} ${+this.pose}`);
+        this.emit(
+          `BEGIN ${id} ${+this.stopped} ${+this.pose} ${this.benchJoint} ${this.sweepPhase}`,
+        );
         this.joints.forEach((j, i) =>
           this.emit(
             `JOINT ${id} ${i} ${j.pin} ${j.min} ${j.max} ${j.initial} ${j.direction} ${j.calibrated} ${j.attached} ${j.pulse} ${j.target} ${j.standing}`,
@@ -87,6 +117,8 @@ export class DemoTransport {
         this.hold();
         break;
       case "RELEASE":
+        this.benchJoint = -1;
+        this.sweepPhase = 0;
         this.joints.forEach((j) => {
           j.attached = 0;
           j.target = j.pulse;
@@ -97,9 +129,52 @@ export class DemoTransport {
         this.stopped = false;
         this.heartbeat = this.lastTick = Date.now();
         break;
+      case "CENTER":
+        if (this.stopped || (!detached && this.benchJoint !== a[0]))
+          error = "STATE";
+        else {
+          if (this.benchJoint === -1) {
+            j.attached = 1;
+            j.pulse = j.target = BenchCenterPulse;
+            j.remainder = 0;
+            this.lastTick = Date.now();
+          } else j.target = BenchCenterPulse;
+          j.speed = 100;
+          j.remainder = 0;
+          this.benchJoint = a[0];
+          this.sweepPhase = 0;
+          j.calibrated = 0;
+          this.pose = false;
+        }
+        break;
+      case "SWEEP":
+        if (
+          this.stopped ||
+          this.benchJoint !== a[0] ||
+          this.sweepPhase !== 0 ||
+          j.pulse !== BenchCenterPulse ||
+          j.target !== BenchCenterPulse
+        )
+          error = "STATE";
+        else if (
+          a[1] < BenchMinimumPulse ||
+          a[1] >= BenchCenterPulse ||
+          a[2] <= BenchCenterPulse ||
+          a[2] > BenchMaximumPulse ||
+          a[3] < 10 ||
+          a[3] > 100
+        )
+          error = "RANGE";
+        else {
+          this.sweepMaximum = a[2];
+          this.sweepPhase = 1;
+          this.move(j, a[1], a[3]);
+        }
+        break;
       case "ARM":
         if (Date.now() - this.heartbeat >= 1500) this.hold();
-        if (this.stopped || j.attached) error = "STATE";
+        if (this.stopped || this.benchJoint !== -1 || j.attached)
+          error = "STATE";
         else if (a[1] < j.min || a[1] > j.max) error = "RANGE";
         else {
           j.attached = 1;
@@ -109,7 +184,8 @@ export class DemoTransport {
         }
         break;
       case "MOVE":
-        if (this.stopped || !j.attached) error = "STATE";
+        if (this.stopped || this.benchJoint !== -1 || !j.attached)
+          error = "STATE";
         else if (a[1] < j.min || a[1] > j.max || a[2] < 10 || a[2] > 100)
           error = "RANGE";
         else this.move(j, a[1], a[2]);
@@ -124,6 +200,7 @@ export class DemoTransport {
       case "CAPTURE":
         if (
           this.stopped ||
+          this.benchJoint !== -1 ||
           this.joints.some(
             (j) => !j.attached || !j.calibrated || j.target !== j.pulse,
           )
@@ -148,7 +225,12 @@ export class DemoTransport {
         }
         break;
       case "STAND":
-        if (this.stopped || !this.pose || this.joints.some((j) => !j.attached))
+        if (
+          this.stopped ||
+          this.benchJoint !== -1 ||
+          !this.pose ||
+          this.joints.some((j) => !j.attached)
+        )
           error = "STATE";
         else if (a[0] < 10 || a[0] > 100) error = "RANGE";
         else

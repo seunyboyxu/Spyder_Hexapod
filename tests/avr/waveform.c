@@ -93,8 +93,8 @@ static void printstats() {
            pins[i].periodMin, pins[i].periodMax, pins[i].level);
 }
 int main(int argc, char **argv) {
-  if (argc != 4) {
-    fprintf(stderr, "Usage: harness elf mode trace.csv\n");
+  if (argc != 4 && argc != 6) {
+    fprintf(stderr, "Usage: harness elf mode trace.csv [benchMin benchMax]\n");
     return 2;
   }
   elf_firmware_t firmware = {0};
@@ -127,7 +127,33 @@ int main(int argc, char **argv) {
   send("1 RESUME\n");
   send("2 ARM 0 1500\n");
   runus(100000);
-  if (!strcmp(argv[2], "steady") || !strncmp(argv[2], "release-offset-", 15)) {
+  if (!strcmp(argv[2], "bench-sweep")) {
+    const int minimum = argc == 6 ? atoi(argv[4]) : 1000;
+    const int maximum = argc == 6 ? atoi(argv[5]) : 2000;
+    if (minimum >= 1500 || maximum <= 1500 || minimum < 1 || maximum > 5000)
+      return 2;
+    send("50 RELEASE\n");
+    strcpy(phase, "bench-center");
+    send("60 CENTER 4\n");
+    runus(100000);
+    strcpy(phase, "bench-sweep");
+    char cmd[80];
+    snprintf(cmd, sizeof cmd, "61 SWEEP 4 %d %d 100\n", minimum, maximum);
+    send(cmd);
+    const double finish = nowus() + 2000000.0 + (maximum - minimum) * 20000.0;
+    for (int i = 0; nowus() < finish; i++) {
+      snprintf(cmd, sizeof cmd, "%d PING\n", 1000 + i);
+      send(cmd);
+      runus(200000);
+    }
+    send("62 STATUS\n");
+    runus(100000);
+    strcpy(phase, "bench-release");
+    send("63 RELEASE\n");
+    runus(100000);
+    printstats();
+  } else if (!strcmp(argv[2], "steady") ||
+             !strncmp(argv[2], "release-offset-", 15)) {
     for (int i = 1; i < 12; i++) {
       char cmd[80];
       snprintf(cmd, sizeof cmd, "%d ARM %d 1500\n", i + 2, i);

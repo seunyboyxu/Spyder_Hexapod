@@ -17,7 +17,9 @@ bool validConfig(const Config &c) {
   return true;
 }
 Controller::Controller(Outputs &o)
-    : out_(o), heartbeat_(0), lastTick_(0), stopped_(false) {
+    : out_(o), heartbeat_(0), lastTick_(0), stopped_(false), benchJoint_(-1),
+      sweepPhase_(0), sweepMinimum_(BenchMinimumPulse),
+      sweepMaximum_(BenchMaximumPulse) {
   config_.standingValid = false;
   for (uint8_t i = 0; i < JointCount; ++i) {
     config_.joints[i] = JointConfig{1400, 1600, 1500, 1, false};
@@ -43,7 +45,7 @@ Result Controller::arm(uint8_t i, uint16_t p, uint32_t now) {
     stop();
   if (i >= JointCount)
     return Result::Invalid;
-  if (stopped_ || state_[i].attached)
+  if (stopped_ || benchJoint_ >= 0 || state_[i].attached)
     return Result::State;
   if (p < config_.joints[i].minimum || p > config_.joints[i].maximum)
     return Result::Range;
@@ -56,7 +58,7 @@ Result Controller::arm(uint8_t i, uint16_t p, uint32_t now) {
 Result Controller::move(uint8_t i, uint16_t p, uint16_t speed) {
   if (i >= JointCount)
     return Result::Invalid;
-  if (stopped_ || !state_[i].attached)
+  if (stopped_ || benchJoint_ >= 0 || !state_[i].attached)
     return Result::State;
   if (p < config_.joints[i].minimum || p > config_.joints[i].maximum ||
       speed < 10 || speed > 100)
@@ -69,6 +71,49 @@ Result Controller::move(uint8_t i, uint16_t p, uint16_t speed) {
     remainder_[i] = 0;
   state_[i].target = p;
   speed_[i] = speed;
+  return Result::Ok;
+}
+Result Controller::center(uint8_t i, uint32_t now) {
+  if (uint32_t(now - heartbeat_) >= 1500)
+    stop();
+  if (i >= JointCount)
+    return Result::Invalid;
+  if (stopped_ || (benchJoint_ >= 0 && benchJoint_ != i) ||
+      (benchJoint_ < 0 && !allDetached()))
+    return Result::State;
+  sweepPhase_ = 0;
+  benchJoint_ = i;
+  config_.joints[i].calibrated = false;
+  config_.standingValid = false;
+  remainder_[i] = 0;
+  speed_[i] = 100;
+  state_[i].target = BenchCenterPulse;
+  if (!state_[i].attached) {
+    state_[i].commanded = BenchCenterPulse;
+    state_[i].attached = true;
+    lastTick_ = now;
+    out_.attach(i, pin(i), BenchCenterPulse);
+  }
+  return Result::Ok;
+}
+Result Controller::sweep(uint8_t i, uint16_t minimum, uint16_t maximum,
+                         uint16_t speed) {
+  if (i >= JointCount)
+    return Result::Invalid;
+  if (stopped_ || benchJoint_ != i || sweepPhase_ ||
+      state_[i].commanded != BenchCenterPulse ||
+      state_[i].target != BenchCenterPulse)
+    return Result::State;
+  if (minimum < BenchMinimumPulse || minimum >= BenchCenterPulse ||
+      maximum <= BenchCenterPulse || maximum > BenchMaximumPulse ||
+      speed < 10 || speed > 100)
+    return Result::Range;
+  sweepMinimum_ = minimum;
+  sweepMaximum_ = maximum;
+  sweepPhase_ = 1;
+  speed_[i] = speed;
+  remainder_[i] = 0;
+  state_[i].target = sweepMinimum_;
   return Result::Ok;
 }
 Result Controller::configure(uint8_t i, const JointConfig &j) {
@@ -84,12 +129,15 @@ Result Controller::configure(uint8_t i, const JointConfig &j) {
 }
 void Controller::stop() {
   stopped_ = true;
+  sweepPhase_ = 0;
   for (uint8_t i = 0; i < JointCount; ++i) {
     state_[i].target = state_[i].commanded;
     remainder_[i] = 0;
   }
 }
 void Controller::release() {
+  benchJoint_ = -1;
+  sweepPhase_ = 0;
   for (uint8_t i = 0; i < JointCount; ++i) {
     if (state_[i].attached)
       out_.detach(i);
@@ -125,10 +173,22 @@ void Controller::tick(uint32_t now) {
           s.commanded < s.target ? s.commanded + step : s.commanded - step;
       out_.write(i, s.commanded);
     }
+    if (benchJoint_ == i && sweepPhase_ && s.commanded == s.target) {
+      remainder_[i] = 0;
+      if (sweepPhase_ == 1) {
+        sweepPhase_ = 2;
+        s.target = sweepMaximum_;
+      } else if (sweepPhase_ == 2) {
+        sweepPhase_ = 3;
+        s.target = BenchCenterPulse;
+      } else {
+        sweepPhase_ = 0;
+      }
+    }
   }
 }
 Result Controller::captureStanding() {
-  if (stopped_)
+  if (stopped_ || benchJoint_ >= 0)
     return Result::State;
   for (uint8_t i = 0; i < JointCount; ++i) {
     if (!config_.joints[i].calibrated)
@@ -156,7 +216,7 @@ Result Controller::setStanding(const uint16_t (&p)[JointCount]) {
   return Result::Ok;
 }
 Result Controller::stand(uint16_t speed) {
-  if (stopped_)
+  if (stopped_ || benchJoint_ >= 0)
     return Result::State;
   if (!config_.standingValid)
     return Result::Pose;

@@ -1,6 +1,11 @@
 import { Session, SerialTransport } from "./session.js";
 import { DemoTransport } from "./demo.js";
-import { validateProfile } from "./protocol.js";
+import {
+  validateProfile,
+  BenchMinimumPulse,
+  BenchMaximumPulse,
+  BenchCenterPulse,
+} from "./protocol.js";
 const $ = (id) => document.getElementById(id),
   session = new Session();
 let busy = false,
@@ -94,23 +99,86 @@ for (let leg = 0; leg < 4; leg++) {
       event.preventDefault();
       const form = new FormData(event.target);
       return action(async () => {
-        await session.command(
-          "CONFIG",
-          [
-            i,
-            Number(form.get("minimum")),
-            Number(form.get("maximum")),
-            Number(form.get("initial")),
-            Number(form.get("direction")),
-            form.has("calibrated") ? 1 : 0,
-          ],
-        );
-        row.querySelector(".pulse-input").value = session.state.joints[i].initial;
+        await session.command("CONFIG", [
+          i,
+          Number(form.get("minimum")),
+          Number(form.get("maximum")),
+          Number(form.get("initial")),
+          Number(form.get("direction")),
+          form.has("calibrated") ? 1 : 0,
+        ]);
+        row.querySelector(".pulse-input").value =
+          session.state.joints[i].initial;
       }, "Calibration applied in RAM. Save to Uno while released to retain it after reset.");
     };
     card.append(row);
   }
   $("legs").append(card);
+}
+for (let i = 0; i < 12; i++) {
+  const option = document.createElement("option");
+  option.value = i;
+  option.textContent = `L${Math.floor(i / 3)}/J${i % 3} · pin unknown`;
+  $("bench-joint").append(option);
+}
+$("bench-minimum").value = BenchMinimumPulse;
+$("bench-minimum").min = BenchMinimumPulse;
+$("bench-minimum").max = BenchCenterPulse - 1;
+$("bench-maximum").value = BenchMaximumPulse;
+$("bench-maximum").min = BenchCenterPulse + 1;
+$("bench-maximum").max = BenchMaximumPulse;
+$("bench-envelope").textContent =
+  `Default test envelope: ${BenchMinimumPulse}–${BenchMaximumPulse} µs. These pulses do not establish maximum angle or full mechanical travel. Speed: 10–100 µs/s.`;
+$("bench-center-note").textContent =
+  `90° is nominal at ${BenchCenterPulse} µs, not a measured angle. First attachment can jump. Explicit Resume is required before Center; powered servos can retain holding torque after Release.`;
+function benchRange() {
+  const values = ["bench-minimum", "bench-maximum", "bench-speed"].map((id) =>
+    Number($(id).value),
+  );
+  const [minimum, maximum, rate] = values;
+  if (
+    !values.every(Number.isInteger) ||
+    minimum < BenchMinimumPulse ||
+    minimum >= BenchCenterPulse ||
+    maximum <= BenchCenterPulse ||
+    maximum > BenchMaximumPulse ||
+    rate < 10 ||
+    rate > 100
+  )
+    throw new Error(
+      `Choose ${BenchMinimumPulse} ≤ minimum < ${BenchCenterPulse} < maximum ≤ ${BenchMaximumPulse} µs, and speed 10–100 µs/s.`,
+    );
+  return values;
+}
+function unloaded() {
+  if (!$("unloaded").checked)
+    throw new Error(
+      "Remove the selected servo from the leg and confirm it is unloaded first.",
+    );
+}
+$("bench-center").onclick = () =>
+  action(async () => {
+    unloaded();
+    await session.command("CENTER", [Number($("bench-joint").value)]);
+    populateCalibration();
+  }, "Center requested. Nominal 90° is a command, not a measured position; keep the servo unloaded.");
+$("bench-sweep").onclick = () =>
+  action(async () => {
+    unloaded();
+    await session.command("SWEEP", [
+      Number($("bench-joint").value),
+      ...benchRange(),
+    ]);
+  }, "One unloaded sweep started. Watch for binding and keep STOP accessible.");
+for (const id of [
+  "unloaded",
+  "bench-joint",
+  "bench-minimum",
+  "bench-maximum",
+  "bench-speed",
+]) {
+  $(id).addEventListener("change", render);
+  $(id).addEventListener("input", render);
 }
 function render() {
   const ready = session.ready,
@@ -118,7 +186,55 @@ function render() {
     detached = state?.joints.every((j) => !j.attached),
     count = state?.joints.filter((j) => j.attached).length || 0,
     can = ready && !busy && !(session.safetyPending > 0),
-    checked = $("supported").checked;
+    checked = $("supported").checked,
+    bench = ready && state.benchJoint >= 0,
+    selected = bench ? state.benchJoint : Number($("bench-joint").value),
+    selectedJoint = state?.joints[selected];
+  let validRange = false;
+  try {
+    benchRange();
+    validRange = true;
+  } catch {}
+  $("bench-joint").value = selected;
+  $("bench-joint").disabled = !can || bench;
+  Array.from($("bench-joint").options).forEach((option, i) => {
+    const pin = state?.joints[i].pin;
+    option.textContent = `L${Math.floor(i / 3)}/J${i % 3} · ${ready ? (pin >= 14 ? "A" + (pin - 14) : "D" + pin) : "pin unknown"}`;
+  });
+  const sameBench = bench && state.benchJoint === selected;
+  $("bench-center").disabled =
+    !can ||
+    !$("unloaded").checked ||
+    state?.stopped ||
+    (!detached && !sameBench);
+  $("bench-sweep").disabled =
+    !can ||
+    !$("unloaded").checked ||
+    state?.stopped ||
+    !sameBench ||
+    state.sweepPhase !== 0 ||
+    selectedJoint.commanded !== BenchCenterPulse ||
+    selectedJoint.target !== BenchCenterPulse ||
+    !validRange;
+  $("bench-commanded").textContent = ready ? selectedJoint.commanded : "—";
+  $("bench-target").textContent = ready ? selectedJoint.target : "—";
+  $("bench-status").textContent = !ready
+    ? "No device authority"
+    : !bench
+      ? "Released · select an unloaded servo, Resume, then Center"
+      : state.stopped
+        ? "Hold · sweep cancelled; Resume, then Center"
+        : state.sweepPhase === 1
+          ? "Sweeping to minimum · 1 / 3"
+          : state.sweepPhase === 2
+            ? "Sweeping to maximum · 2 / 3"
+            : state.sweepPhase === 3
+              ? "Returning to center · 3 / 3"
+              : selectedJoint.commanded !== selectedJoint.target
+                ? "Recentering · wait before sweeping"
+                : selectedJoint.commanded === BenchCenterPulse
+                  ? "Centered · nominal 90° · ready for one sweep"
+                  : "Holding · Center before a fresh sweep";
   $("connection").textContent = ready
     ? session.transport.demo
       ? "DEMO · simulated robot"
@@ -140,17 +256,19 @@ function render() {
     : "No standing pose captured.";
   $("connect").disabled = ready || busy || !!session.transport;
   $("demo").disabled = ready || busy || !!session.transport;
-  $("disconnect").disabled = !session.transport || busy || session.safetyPending > 0;
+  $("disconnect").disabled =
+    !session.transport || busy || session.safetyPending > 0;
   $("stop").disabled = !ready;
   $("release").disabled = !ready;
   $("resume").disabled = !can || !state?.stopped;
   const all = state?.joints.every((j) => j.attached && j.calibrated),
     still = state?.joints.every((j) => j.commanded === j.target);
-  $("capture").disabled = !can || !all || !still || state.stopped || !checked;
+  $("capture").disabled =
+    !can || bench || !all || !still || state.stopped || !checked;
   $("stand").disabled =
-    !can || !all || !state.standingValid || state.stopped || !checked;
+    !can || bench || !all || !state.standingValid || state.stopped || !checked;
   for (const id of ["save", "load"]) $(id).disabled = !can || !detached;
-  $("export").disabled = !can;
+  $("export").disabled = !can || bench;
   $("apply-profile").disabled = !can || !detached || !imported;
   document.querySelectorAll(".joint").forEach((row, i) => {
     const j = state?.joints[i];
@@ -168,11 +286,16 @@ function render() {
     row.querySelector(".commanded").textContent = ready ? j.commanded : "—";
     row.querySelector(".target").textContent = ready ? j.target : "—";
     row.querySelector(".arm").disabled =
-      !can || !checked || !!j?.attached || !!state?.stopped;
+      !can || bench || !checked || !!j?.attached || !!state?.stopped;
     for (const name of ["minus", "plus", "move"])
       row.querySelector("." + name).disabled =
-        !can || !checked || !j?.attached || !!state?.stopped;
+        !can || bench || !checked || !j?.attached || !!state?.stopped;
     row.querySelector("form button").disabled = !can || !detached;
+    row.querySelectorAll("input, select").forEach((input) => {
+      input.disabled = !!bench;
+    });
+    if (bench)
+      row.querySelector("form").elements.calibrated.checked = j.calibrated;
     if (j) {
       const input = row.querySelector(".pulse-input");
       input.min = j.minimum;
@@ -255,7 +378,8 @@ $("release").onclick = async () => {
     !confirm(
       "Release all servo signals? The robot may drop. Support the body first.",
     )
-  ) return;
+  )
+    return;
   const revision = ++noticeRevision;
   try {
     await session.release();
@@ -373,7 +497,9 @@ $("apply-profile").onclick = () =>
   });
 const powerWarning = document.createElement("strong");
 powerWarning.textContent = "USB-only servo power is unsuitable.";
-document.querySelector("aside .panel p:not(.eyebrow)").prepend(powerWarning, " ");
+document
+  .querySelector("aside .panel p:not(.eyebrow)")
+  .prepend(powerWarning, " ");
 const jointWorkspace = document.querySelector(".joint-workspace");
 jointWorkspace.querySelector(".section-heading span").textContent =
   "12 SIGNALS / DEVICE PIN MAP";
