@@ -12,7 +12,7 @@
 | You need command/storage behavior | [Protocol/software reference](protocol.md) |
 | You need the selected STLs/editable sources | [CAD guide](../cad/README.md) |
 | You need the old GitHub and source attribution | [Upstream reference](reference/upstream.md) |
-| You need evidence | [Revision 3 verification](verification/2026-10-19-unloaded-servo.md), [revision 2 history](verification.md), [handover verification](verification/2026-10-18-handover.md) |
+| You need evidence | [Connection diagnostic patch](verification/2026-10-19-connection-diagnostics.md), [revision 3 verification](verification/2026-10-19-unloaded-servo.md), [revision 2 history](verification.md), [handover verification](verification/2026-10-18-handover.md) |
 | You are recording a physical test | [Calibration log template](templates/calibration-log.md) |
 
 [Archive](archive/) contains the original handover and revision 1 audit. [Superpowers plans/specifications](superpowers/) preserve the software design history. Their historical status and old hardware proposals do not override the current state or owner decisions.

@@ -59,7 +59,7 @@ scripts/              Test runners and signed AVR toolchain/build helpers
 docs/                 State, plan, calibration, development, references and archive
 ```
 
-[Revision 3 verification](docs/verification/2026-10-19-unloaded-servo.md) records native checks, 36 JavaScript tests, 14 browser tests and 25 compiled-AVR scenarios, including an isolated one-cycle output sweep. [Revision 2 verification](docs/verification.md) is retained as history. [Handover verification](docs/verification/2026-10-18-handover.md) records the later organization and fresh checks. These are software results, not a physical standing demonstration.
+[Revision 3 verification](docs/verification/2026-10-19-unloaded-servo.md) records native checks, 36 JavaScript tests, 14 browser tests and 25 compiled-AVR scenarios, including an isolated one-cycle output sweep. [Revision 2 verification](docs/verification.md) is retained as history. [Handover verification](docs/verification/2026-10-18-handover.md) records the later organization and fresh checks. The later [connection diagnostic patch](docs/verification/2026-10-19-connection-diagnostics.md) passes 39 JavaScript tests and 17 browser tests and preserves startup failure reasons; its firmware is unchanged. These are software results, not a physical standing demonstration.
 
 The two Fusion archives contain named editable counterparts for six of the seven selected print parts. The backing-pivot editable source and later fit packages still need recovery; the [CAD guide](cad/README.md) marks the gap and explains editing limitations. The [owner's Windows recovery folder](docs/handover.md#recovery-folder-supplied-by-the-owner) is documented but not readable from this cloud environment.
 

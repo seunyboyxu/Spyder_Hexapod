@@ -196,3 +196,73 @@ test("sustained foreground commands service heartbeat without clearing hold", as
   await s.command("PING");
   assert(s.state.stopped);
 });
+
+test("startup faults preserve their original diagnostic and do not send after cancellation", async (t) => {
+  for (const kind of ["version", "read"]) {
+    const d = new DemoTransport();
+    d.settleMs = 5;
+    const originalOpen = d.open.bind(d);
+    const expected =
+      kind === "version"
+        ? "Unsupported firmware: upload Spyder revision 3 and reload this console"
+        : "Serial read failed during board reset";
+    d.open = async (onLine, onError) => {
+      await originalOpen(onLine);
+      if (kind === "version") onLine("BOOT SPYDER 2");
+      else onError(new Error(expected));
+    };
+    const sent = [];
+    const originalWrite = d.write.bind(d);
+    d.write = (line) => {
+      sent.push(line);
+      return originalWrite(line);
+    };
+    const s = new Session({ heartbeatMs: 0, pollMs: 0, timeoutMs: 100 });
+    t.after(() => s.disconnect());
+    const faults = [];
+    s.addEventListener("fault", (e) => faults.push(e.detail));
+    await assert.rejects(s.connect(d), { message: expected });
+    assert.equal(faults.at(-1), expected);
+    assert.deepEqual(sent, []);
+    assert.equal(s.ready, false);
+  }
+});
+
+test("valid revision 3 boot during the reset wait connects without automatic arming", async (t) => {
+  const d = new DemoTransport();
+  d.settleMs = 5;
+  const originalOpen = d.open.bind(d);
+  d.open = async (onLine) => {
+    await originalOpen(onLine);
+    onLine("BOOT SPYDER 3");
+  };
+  const s = new Session({ heartbeatMs: 0, pollMs: 0, timeoutMs: 100 });
+  t.after(() => s.disconnect());
+  await s.connect(d);
+  assert(
+    s.ready && s.state.stopped && s.state.joints.every((j) => !j.attached),
+  );
+});
+
+test("a failed old startup cannot close a subsequent healthy connection", async (t) => {
+  const old = new DemoTransport();
+  old.settleMs = 30;
+  const originalOpen = old.open.bind(old);
+  let started;
+  const opening = new Promise((resolve) => {
+    started = resolve;
+  });
+  old.open = async (onLine, onError) => {
+    await originalOpen(onLine);
+    onError(new Error("Old startup read failed"));
+    started();
+  };
+  const s = new Session({ heartbeatMs: 0, pollMs: 0, timeoutMs: 100 });
+  t.after(() => s.disconnect());
+  const failed = s.connect(old);
+  failed.catch(() => {});
+  await opening;
+  await s.connect(new DemoTransport());
+  await assert.rejects(failed, { message: "Old startup read failed" });
+  assert(s.ready && s.state.joints.every((j) => !j.attached));
+});

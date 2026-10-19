@@ -31,6 +31,8 @@ export class Session extends EventTarget {
     await this.disconnect();
     this.transport = transport;
     const generation = this.generation;
+    const attempt = { generation, error: null };
+    this.attempt = attempt;
     this.opening = true;
     try {
       await transport.open(
@@ -44,7 +46,7 @@ export class Session extends EventTarget {
       if (transport.settleMs)
         await new Promise((resolve) => setTimeout(resolve, transport.settleMs));
       if (generation !== this.generation)
-        throw new Error("Connection cancelled");
+        throw attempt.error || new Error("Connection cancelled");
       await this.request("HELLO");
       await this.request("STATUS");
       this.ready = true;
@@ -67,11 +69,15 @@ export class Session extends EventTarget {
       periodic(this.options.heartbeatMs, "PING");
       periodic(this.options.pollMs, "STATUS");
     } catch (error) {
-      this.fault(error);
+      // The original fault already invalidated this attempt. An old startup
+      // must neither hide that diagnostic nor abort a newer connection.
+      if (generation === this.generation) this.fault(error);
       throw error;
     }
   }
   fault(error) {
+    if (this.attempt?.generation === this.generation)
+      this.attempt.error = error;
     this.ready = false;
     this.opening = false;
     this.generation++;

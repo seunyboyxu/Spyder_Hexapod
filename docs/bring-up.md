@@ -31,6 +31,12 @@ After connecting with servo power off, confirm detached state and hold. Energise
 
 For motors removed from their legs, use [Unloaded servo setup](unloaded-servo-calibration.md) to center and sweep one output. This preserves the leg limits but clears its travel check and standing record in RAM. Refit, support the body, then follow the assembled calibration below.
 
+### If connection fails
+
+Keep servo power disconnected during this check. Close Arduino Serial Monitor/Plotter and other tabs using the port. Use all browser files from the same current release, then hard-refresh Chrome/Edge with Ctrl+Shift+R before reconnecting. If revision 3 was already uploaded successfully, the connection-diagnostic browser patch does not require another firmware upload.
+
+Earlier console files could replace a startup version/read error with **Connection cancelled** after the reset wait. The updated console preserves the original reason. An incompatible boot message, serial read failure or ended USB stream are different cases; the generic wording alone does not identify which happened on a physical board. Note the exact updated message for diagnosis. A failed attempt remains disabled and cannot send arming commands; an old failed startup cannot close a newer healthy connection.
+
 ## 4. Calibrate one servo, then one leg
 
 The first attachment can jump to its selected pulse: SG90s do not report their actual angle. A slow transition cannot fix this. Begin with one unloaded or mechanically checked joint and the supported body. Do not assume 1500 µs is a safe assembled neutral. If uncertain, establish initial alignment with the horn/linkage unloaded before reconnecting the mechanism.

@@ -431,3 +431,74 @@ test("connecting to an existing unloaded hold selects the active device servo", 
   await page.locator("#resume").click();
   await expect(page.locator("#bench-center")).toBeEnabled();
 });
+
+for (const kind of ["version", "read", "healthy"]) {
+  test(`serial startup ${kind} preserves the useful result after the reset wait`, async ({
+    page,
+  }) => {
+    await page.evaluate(async (kind) => {
+      const { DemoTransport } = await import("/demo.js");
+      const firmware = new DemoTransport();
+      const port = {
+        async open() {
+          let inbound;
+          this.readable = new ReadableStream({
+            start(controller) {
+              inbound = controller;
+            },
+          });
+          this.writable = new WritableStream({
+            async write(bytes) {
+              const line = new TextDecoder().decode(bytes);
+              (window.serialWrites ??= []).push(line);
+              await firmware.write(line);
+            },
+          });
+          if (kind === "read")
+            inbound.error(new Error("Serial read failed during board reset"));
+          else {
+            await firmware.open((line) =>
+              inbound.enqueue(new TextEncoder().encode(line + "\n")),
+            );
+            inbound.enqueue(
+              new TextEncoder().encode(
+                kind === "version" ? "BOOT SPYDER 2\n" : "BOOT SPYDER 3\n",
+              ),
+            );
+          }
+        },
+        async close() {
+          await firmware.close();
+        },
+      };
+      Object.defineProperty(navigator, "serial", {
+        configurable: true,
+        value: { requestPort: async () => port },
+      });
+    }, kind);
+    await page.locator("#connect").click();
+    if (kind === "healthy") {
+      await expect(page.locator("#connection")).toHaveText(
+        "UNO · USB connected",
+      );
+      await expect(page.locator("#output-count")).toHaveText("0 / 12 attached");
+      await expect(page.locator("#motion-status")).toContainText(
+        "Hold latched",
+      );
+      await expect(page.locator("#bench-center")).toBeDisabled();
+      await page.locator("#disconnect").click();
+    } else {
+      await expect(page.locator("#disconnect")).toBeEnabled();
+      await expect(page.locator("#notice")).toContainText(
+        kind === "version"
+          ? "Unsupported firmware"
+          : "Serial read failed during board reset",
+      );
+      await expect(page.locator("#notice")).not.toContainText(
+        "Connection cancelled",
+      );
+      expect(await page.evaluate(() => window.serialWrites ?? [])).toEqual([]);
+      await expect(page.locator("#bench-center")).toBeDisabled();
+    }
+  });
+}
