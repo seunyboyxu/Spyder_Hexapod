@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spyder · Calibration bench</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=3.2" />
   </head>
   <body>
     <header>
@@ -24,9 +24,9 @@
           </p>
         </div>
         <div class="intro-note">
-          COMMAND PULSES, NOT MEASURED POSITIONS<br /><strong
-            >Outputs stay detached on reset.</strong
-          >
+          COMMAND PULSES, NOT MEASURED POSITIONS<br /><span id="console-version"
+            >Console 3.2 · Firmware 3</span
+          ><br /><strong>Outputs stay detached on reset.</strong>
         </div>
       </section>
       <section class="connection-bar" aria-label="Connection">
@@ -217,6 +217,6 @@
         ><button id="stop" disabled>STOP · hold</button>
       </div>
     </div>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=3.2"></script>
   </body>
 </html>

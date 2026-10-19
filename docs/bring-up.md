@@ -23,7 +23,9 @@ Optional PlatformIO upload from your own USB-connected computer after a successf
 
 ## 3. Open the console on the connected computer
 
-From the downloaded repository root run `python -m http.server 8000 --bind 127.0.0.1 --directory web` (or `python3`). Visit `http://localhost:8000` in desktop Chrome or Edge. Click **Connect Uno** and select its serial device. Opening USB commonly resets the board; the interface waits before handshaking and never replays old moves. If the port is busy, close other serial applications. Mobile screenshots demonstrate layout only; mobile USB/Web Serial support is not promised.
+On Windows, double-click `Start-Console.bat` and open `http://127.0.0.1:8033/?console=3.2` in desktop Chrome or Edge. Confirm the page label **Console 3.2 · Firmware 3** and leave the server window running. The launcher uses its own absolute web-folder path.
+
+For manual startup, from the downloaded repository root run `python -m http.server 8000 --bind 127.0.0.1 --directory web` (or `python3`) and visit `http://localhost:8000`. Click **Connect Uno** and select its serial device. Opening USB commonly resets the board; the interface waits before handshaking and never replays old moves. If the port is busy, close other serial applications. Mobile screenshots demonstrate layout only; mobile USB/Web Serial support is not promised.
 
 After connecting with servo power off, confirm detached state and hold. Energise the correctly isolated external servo supply only with the body supported. If resetting/reconnecting is needed, turn servo power off first.
 
@@ -34,6 +36,8 @@ For motors removed from their legs, use [Unloaded servo setup](unloaded-servo-ca
 ### If connection fails
 
 Keep servo power disconnected during this check. Close Arduino Serial Monitor/Plotter and other tabs using the port. Use all browser files from the same current release, then hard-refresh Chrome/Edge with Ctrl+Shift+R before reconnecting. If revision 3 was already uploaded successfully, the connection-diagnostic browser patch does not require another firmware upload.
+
+If an error specifically says **upload Spyder revision 2** while the page has the unloaded-servo panel and revision 3 is uploaded, an older browser module is running. Extract the complete console into a fresh folder, use its `Start-Console.bat` and the printed port-8033 URL. Console 3.2 versions its module URLs to bypass older cached modules. Do not downgrade the sketch based on a revision 2 diagnostic from old browser files.
 
 Earlier console files could replace a startup version/read error with **Connection cancelled** after the reset wait. The updated console preserves the original reason. An incompatible boot message, serial read failure or ended USB stream are different cases; the generic wording alone does not identify which happened on a physical board. Note the exact updated message for diagnosis. A failed attempt remains disabled and cannot send arming commands; an old failed startup cannot close a newer healthy connection.
 

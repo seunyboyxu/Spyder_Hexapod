@@ -19,7 +19,9 @@ Spyder is a six-leg mechanical robot project currently testing **four installed 
 
 ## Try the console
 
-Download/clone this repository. On the computer running desktop Chrome or Edge:
+Download/clone this repository. **On Windows, double-click `Start-Console.bat`**, leave its window running and open `http://127.0.0.1:8033/?console=3.2` in desktop Chrome or Edge. The page should show **Console 3.2 · Firmware 3**. The launcher serves the `web/` folder next to itself, even when started from another working directory. Keep your existing revision 3 sketch.
+
+Alternatively, from the project folder on the computer running desktop Chrome or Edge:
 
 ```sh
 python3 -m http.server 8000 --bind 127.0.0.1 --directory web

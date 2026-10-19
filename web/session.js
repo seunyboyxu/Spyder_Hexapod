@@ -1,4 +1,4 @@
-import { encodeCommand, parseLine, Snapshot } from "./protocol.js";
+import { encodeCommand, parseLine, Snapshot } from "./protocol.js?v=3.2";
 export class Session extends EventTarget {
   constructor({
     pollMs = 750,

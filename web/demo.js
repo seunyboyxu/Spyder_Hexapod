@@ -2,7 +2,7 @@ import {
   BenchMinimumPulse,
   BenchMaximumPulse,
   BenchCenterPulse,
-} from "./protocol.js";
+} from "./protocol.js?v=3.2";
 // Interface demonstration only. Native tests exercise the real C++ firmware separately.
 export class DemoTransport {
   constructor() {

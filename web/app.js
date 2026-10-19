@@ -1,11 +1,11 @@
-import { Session, SerialTransport } from "./session.js";
-import { DemoTransport } from "./demo.js";
+import { Session, SerialTransport } from "./session.js?v=3.2";
+import { DemoTransport } from "./demo.js?v=3.2";
 import {
   validateProfile,
   BenchMinimumPulse,
   BenchMaximumPulse,
   BenchCenterPulse,
-} from "./protocol.js";
+} from "./protocol.js?v=3.2";
 const $ = (id) => document.getElementById(id),
   session = new Session();
 let busy = false,

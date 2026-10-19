@@ -32,7 +32,7 @@ test("Release bypasses a busy action and its acknowledgement remains visible", a
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const write = DemoTransport.prototype.write;
     DemoTransport.prototype.write = function (line) {
       (window.sentCommands ??= []).push(line);
@@ -79,7 +79,7 @@ test("ordinary controls wait for safety readback while STOP and Release remain a
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const write = DemoTransport.prototype.write;
     DemoTransport.prototype.write = function (line) {
       if (line.includes(" STOP")) window.delaySafetyStatus = true;
@@ -113,7 +113,7 @@ test("Release reports device rejection instead of claiming outputs detached", as
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const write = DemoTransport.prototype.write;
     DemoTransport.prototype.write = function (line) {
       if (line.includes(" RELEASE"))
@@ -140,7 +140,7 @@ test("a delayed profile completion cannot replace a newer Release result", async
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const write = DemoTransport.prototype.write;
     DemoTransport.prototype.write = function (line) {
       if (line.includes(" CONFIG 11 ")) window.delayProfileStatus = true;
@@ -190,7 +190,7 @@ test("unexpected device hold explains timeout and target cancellation", async ({
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const write = DemoTransport.prototype.write;
     DemoTransport.prototype.write = function (line) {
       if (line.includes(" PING"))
@@ -211,7 +211,7 @@ test("pin labels come from device status, including Uno A0", async ({
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const open = DemoTransport.prototype.open;
     DemoTransport.prototype.open = function (...args) {
       this.joints[11].pin = 14;
@@ -414,7 +414,7 @@ test("connecting to an existing unloaded hold selects the active device servo", 
   page,
 }) => {
   await page.evaluate(async () => {
-    const { DemoTransport } = await import("/demo.js");
+    const { DemoTransport } = await import("/demo.js?v=3.2");
     const open = DemoTransport.prototype.open;
     DemoTransport.prototype.open = function (...args) {
       this.benchJoint = 7;
@@ -437,7 +437,7 @@ for (const kind of ["version", "read", "healthy"]) {
     page,
   }) => {
     await page.evaluate(async (kind) => {
-      const { DemoTransport } = await import("/demo.js");
+      const { DemoTransport } = await import("/demo.js?v=3.2");
       const firmware = new DemoTransport();
       const port = {
         async open() {
@@ -502,3 +502,33 @@ for (const kind of ["version", "read", "healthy"]) {
     }
   });
 }
+
+test("current console loads coherently when obsolete unversioned modules exist", async ({
+  page,
+}) => {
+  const obsolete = [];
+  await page.route(
+    (url) =>
+      /\/(app|session|protocol|demo)\.js$/.test(url.pathname) && !url.search,
+    async (route) => {
+      obsolete.push(route.request().url());
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: 'throw new Error("Obsolete revision 2 module was reused");',
+      });
+    },
+  );
+  await page.goto("/?console=3.2");
+  await expect(page.locator("#console-version")).toHaveText(
+    "Console 3.2 · Firmware 3",
+  );
+  await page.locator("#demo").click();
+  await expect(page.locator("#connection")).toHaveText(
+    "DEMO · simulated robot",
+  );
+  await page.locator("#unloaded").check();
+  await page.locator("#resume").click();
+  await page.locator("#bench-center").click();
+  await expect(page.locator("#bench-commanded")).toHaveText("1500");
+  expect(obsolete).toEqual([]);
+});

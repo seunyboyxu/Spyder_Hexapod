@@ -39,3 +39,7 @@ See [verification results](verification.md) for exercised checks and remaining h
 ## Repository integrity
 
 Run `sha256sum -c cad/SHA256SUMS` to check the selected CAD bytes. The [18 October handover verification](verification/2026-10-18-handover.md) records the organization checks and the unchanged calibration sources. Keep generated toolchains, environments and test output out of Git; the existing `.gitignore` covers them.
+
+## Static console releases
+
+Console 3.2 uses matching `?v=3.2` URLs for the entry module, all internal imports and CSS. Bump that asset version coherently for future browser releases, including browser tests that import the demo for controlled scenarios. Firmware protocol remains SPYDER 3 unless its wire contract changes. `Start-Console.bat` uses an absolute adjacent `web/` path and port 8033; keep it beside that folder in console-only downloads.
