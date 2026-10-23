@@ -8,6 +8,7 @@
 // Power the servos from their own 5-6 V supply, not the Uno. The robot
 // drops when switched off, so support it the first few times.
 #include "Config.h"
+#include "Trims.h"
 #include "Walk.h"
 #include <EEPROM.h>
 #include <Servo.h>
@@ -46,7 +47,7 @@ uint16_t servoMicros(uint8_t leg, uint8_t joint, float angle) {
                   deg * (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) / 180.0f + 0.5f);
 }
 
-void writeAngles(uint8_t leg, const Angles &a) {
+void writeAngles(uint8_t leg, const walk::Angles &a) {
   const float angle[3] = {a.hip, a.thigh, a.foot};
   for (uint8_t j = 0; j < 3; ++j) {
     servos[leg][j].writeMicroseconds(servoMicros(leg, j, angle[j]));
@@ -188,14 +189,6 @@ void update() {
 }
 
 // ---------------- trims in EEPROM ----------------
-
-struct Saved {
-  uint8_t magic, version;
-  float trim[LegCount][3];
-  int8_t dir[LegCount][3];
-  uint8_t sum;
-};
-const uint8_t SavedMagic = 0x5c;
 
 uint8_t checksum(const Saved &s) {
   const uint8_t *b = reinterpret_cast<const uint8_t *>(&s);
