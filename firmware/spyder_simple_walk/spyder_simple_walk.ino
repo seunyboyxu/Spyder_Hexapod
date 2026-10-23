@@ -14,6 +14,10 @@
 //   stop   (x)        finish the current step and stand
 //   off    (o)        servos go limp (the robot drops - hold it)
 //   check  (c)        run the direction check below
+//   hip <leg> <deg>, knee <leg> <deg>, foot <leg> <deg>
+//                     change one joint's standing angle (legs 1-4) and
+//                     move to it, to find good values. Not saved: copy
+//                     the numbers into STAND_HIP/KNEE/FOOT below.
 // The robot cannot reply: KNEE2 is on pin 1, the USB serial TX pin, so
 // the sketch only listens. Unplug that servo, or switch servo power off,
 // while uploading.
@@ -49,9 +53,12 @@
 
 // ---- Standing pose, Servo.write() degrees (from Seun's Stand(90, 90, 50)) ----
 //                         leg1 leg2 leg3 leg4
-const int STAND_HIP[4]  = {90,  70,  110, 90};
-const int STAND_KNEE[4] = {90,  140, 90,  75};
-const int STAND_FOOT[4] = {50,  50,  0,   25}; // leg3 was 50-55 = -5, which the servo treats as 0
+// Leg 2's knee is 90 here, not Seun's 140: on pin 1 with Serial transmit
+// on, Seun's sketch never actually sent it a pulse, and 140 drives it past
+// its stop. Find the right value with "knee 2 <deg>" and put it here.
+int STAND_HIP[4]  = {90,  70,  110, 90};
+int STAND_KNEE[4] = {90,  90,  90,  75};
+int STAND_FOOT[4] = {50,  50,  0,   25}; // leg3 was 50-55 = -5, which the servo treats as 0
 
 // ---- Directions (check with CHECK_DIRECTIONS) ----
 // +1 or -1 so that a positive knee move LIFTS the foot and a positive hip
@@ -258,6 +265,21 @@ void runCommand(char *text) {
     return;
   }
   attachAll();
+  int *joint = NULL;
+  if (!strcmp(w, "hip"))
+    joint = STAND_HIP;
+  else if (!strcmp(w, "knee"))
+    joint = STAND_KNEE;
+  else if (!strcmp(w, "foot"))
+    joint = STAND_FOOT;
+  if (joint) {
+    char *degrees = strtok(NULL, " ");
+    const int leg = number ? atoi(number) : 0;
+    if (leg >= 1 && leg <= 4 && degrees)
+      joint[leg - 1] = constrain(atoi(degrees), 0, 180);
+    stand();
+    return;
+  }
   if (!strcmp(w, "forward") || !strcmp(w, "w"))
     walk(cycles, 1, 0);
   else if (!strcmp(w, "back") || !strcmp(w, "b"))
