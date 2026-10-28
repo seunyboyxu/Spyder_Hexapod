@@ -6,6 +6,8 @@ Quadpod uses an ESP32, PCA9685, twelve servos and Bluetooth Classic. Its channel
 
 Current project: [seunyboyxu/Spyder_Hexapod](https://github.com/seunyboyxu/Spyder_Hexapod). Legacy firmware and browser tools were removed from the active tree at the owner's request on28 October2026; their earlier versions remain in Git history. CAD, attribution and current ESP32 tests are retained.
 
+The [crawl sketch](../../firmware/spyder_esp32_ble_crawl/README.md) reproduces quadpod's step sequences (`step_forward`, `step_back`, `turn_left`, `turn_right` in `src/servos.cpp`) in Spyder's body frame. No quadpod source is copied; attribution is in its `Walk.cpp`.
+
 ## Licenses and provenance
 
 Upstream contains a GPL version3 license; the exact pinned text is retained in [quadpod-GPL-3.0.txt](licenses/quadpod-GPL-3.0.txt). This does not silently assign a new global license to owner-authored files or assert independently checked model terms. The owner has not selected a separate repository-wide license for newly authored code/docs. Preserve upstream notices and establish applicable terms before separately licensed redistribution.
