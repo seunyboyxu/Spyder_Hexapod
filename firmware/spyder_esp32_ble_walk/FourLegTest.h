@@ -35,6 +35,7 @@ public:
   bool arming() const { return arming_; }
   bool coordinated() const { return group_; }
   bool walking() const { return walkMode_!=0; }
+  bool takeWalkError() { bool error=walkError_; walkError_=false; return error; }
   uint8_t selected() const { return selected_; }
   const legtest::LegTest &leg(uint8_t index) const { return legs_[index]; }
   Settings settings() const;
@@ -54,8 +55,10 @@ private:
   uint16_t cyclesLeft_;
   float stride_,turn_;
   uint32_t lastWalk_;
+  bool walkError_;
   const char *walkCommand(char **args,uint8_t count,uint32_t now);
-  bool walkFits(float stride,float turn) const;
+  bool walkFits(float stride,float turn,uint16_t cycles) const;
+  bool lifecycleFits(walk::Gait trial,uint16_t cycles,bool stopping) const;
   bool trackAll(const walk::Vec3 (&feet)[LegCount],bool &arrived);
   void tickWalk(uint32_t now);
 };

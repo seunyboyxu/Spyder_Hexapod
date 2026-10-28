@@ -39,6 +39,23 @@ int main() {
  wireless("halt\n"); settle();
  wireless("back\n"); for(int i=0;i<200;++i) { fakeNow+=20; loop(); clearReplies(); }
  wireless("stop\n"); assert(!rig.busy() && outputs.activeMask()==0x0fff);
+ // A runtime sample between preflight frames reports ERR, never Ready.
+ wireless("off\n");
+ auto narrow=rig.settings(); narrow.leg[3].joint[2].minimum=744;
+ assert(rig.applySettings(narrow));
+ wireless("armall\n"); settle(); wireless("leg all\n"); wireless("stand\n"); settle();
+ wireless("walk\n"); fakeNow+=19; loop(); clearReplies();
+ bool rejected=false;
+ for(int i=0;i<2000 && rig.walking();++i) {
+  fakeNow+=21; loop();
+  if(lastReplyHas("ERR walking target rejected")) {
+   assert(!rig.walking() && !rig.busy() && outputs.activeMask()==0x0fff);
+   rejected=true;
+  }
+  assert(!lastReplyHas("Ready")); clearReplies();
+ }
+ assert(rejected);
+ wireless("off\n"); wireless("load\n"); wireless("armall\n"); settle();
  wireless("walk\n"); for(int i=0;i<100;++i) { fakeNow+=20; loop(); clearReplies(); }
  tx()->clientSubscribe(false); assert(oe==HIGH); loop(); clearReplies();
  assert(!rig.anyAttached() && !rig.walking()); // radio loss releases everything

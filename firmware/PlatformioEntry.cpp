@@ -10,6 +10,8 @@
 #include "spyder_esp32_ble_leg_test/spyder_esp32_ble_leg_test.ino"
 #elif defined(SPYDER_BLE_FOUR_LEG)
 #include "spyder_esp32_ble_four_leg_test/spyder_esp32_ble_four_leg_test.ino"
+#elif defined(SPYDER_BLE_WALK)
+#include "spyder_esp32_ble_walk/spyder_esp32_ble_walk.ino"
 #else
 #error "Select a documented ESP32 environment from platformio.ini."
 #endif

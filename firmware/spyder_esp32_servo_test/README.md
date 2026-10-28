@@ -113,4 +113,4 @@ Published as an ESP32 bench-test controller at the owner's request. Physical val
 
 ## Code overview
 
-The [firmware and function guide](../../docs/firmware-guide.md) explains this sketch's commands, main classes/functions, storage, input handling and safety. The [sketch index](../README.md) compares all four ESP32 upload options.
+The [firmware and function guide](../../docs/firmware-guide.md) explains this sketch's commands, main classes/functions, storage, input handling and safety. The [sketch index](../README.md) compares all five ESP32 upload options.

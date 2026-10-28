@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <initializer_list>
 using namespace fourleg;
 using walk::Vec3;
 
@@ -150,10 +151,66 @@ static void controller() {
   puts("PASS walk controller: preflight, walk/back/left/right, halt, stop, release");
 }
 
+
+// Reject an unsafe halt before changing the live gait or writing any joint.
+// Original PR accepted this command, then silently froze at hip81.3 degrees.
+static void narrowHalt() {
+  Hardware hw; FourLegTest rig(hw); uint32_t now=0; rig.begin(now);
+  auto settings=rig.settings();
+  for(auto &leg:settings.leg) for(auto &joint:leg.joint) joint.checked=1;
+  settings.leg[2].joint[0].minimum=810;
+  assert(rig.applySettings(settings));
+  assert(send(rig,"armall",now));
+  for(int i=0;i<100 && rig.busy();++i) rig.tick(now+=20);
+  assert(send(rig,"leg all",now)); assert(send(rig,"stand",now));
+  for(int i=0;i<5000 && rig.busy();++i) rig.tick(now+=20);
+  assert(send(rig,"left",now)); rig.tick(now+=20);
+  for(int i=0;i<601;++i) rig.tick(now+=20);
+  auto count=hw.writes;
+  for(const char *direction:{"walk","back","right"}) {
+    assert(!send(rig,direction,now));
+    assert(rig.walking() && hw.writes==count);
+  }
+  assert(!send(rig,"halt",now));
+  assert(rig.walking() && hw.writes==count);
+  rig.tick(now+=20); assert(rig.walking()); // Rejection did not queue the unsafe stop.
+  assert(send(rig,"stop",now)); assert(!rig.walking());
+  count=hw.writes; rig.tick(now+=10000); assert(hw.writes==count);
+  puts("PASS unsafe halt is rejected atomically; stop remains available");
+}
+
+
+// Non-20ms hardware cadence can reach a point between preflight samples.
+// Reject the complete frame, report once, and preserve all current outputs.
+static void runtimeFrameRejection() {
+  Hardware hw; FourLegTest rig(hw); uint32_t now=0; rig.begin(now);
+  auto settings=rig.settings();
+  for(auto &leg:settings.leg) for(auto &joint:leg.joint) joint.checked=1;
+  settings.leg[3].joint[2].minimum=744;
+  assert(rig.applySettings(settings)); assert(send(rig,"armall",now));
+  for(int i=0;i<100 && rig.busy();++i) rig.tick(now+=20);
+  assert(send(rig,"leg all",now)); assert(send(rig,"stand",now));
+  for(int i=0;i<5000 && rig.busy();++i) rig.tick(now+=20);
+  assert(send(rig,"walk",now)); rig.tick(now+=20);
+  bool rejected=false;
+  for(int n=0;n<2000 && rig.walking();++n) {
+    const auto count=hw.writes; rig.tick(now+=22);
+    if(rig.takeWalkError()) {
+      assert(hw.writes==count); assert(!rig.busy());
+      assert(hw.active==0x0fff && !rig.takeWalkError()); rejected=true;
+    }
+  }
+  assert(rejected); const auto count=hw.writes;
+  rig.tick(now+=1000); assert(hw.writes==count);
+  puts("PASS runtime cadence rejection: atomic all-leg hold and one-shot error");
+}
+
 int main() {
   gaitGeometry(StrideMm, 0, "walk");
   gaitGeometry(-StrideMm, 0, "back");
   gaitGeometry(0, TurnDeg, "left");
   gaitGeometry(0, -TurnDeg, "right");
   controller();
+  narrowHalt();
+  runtimeFrameRejection();
 }

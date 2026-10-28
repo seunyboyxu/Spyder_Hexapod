@@ -2,15 +2,16 @@
 
 Spyder is a six-leg mechanical robot project currently developing with **four legs and twelve positional servos**, an **original ESP32** and a **PCA9685**. The current controller uses **BLE for iPhone commands**, with USB serial available for setup and diagnostics.
 
-**Start with the [four-leg BLE sketch](firmware/spyder_esp32_ble_four_leg_test/README.md).** Version 1.1 supports group arming/calibration, individual corrections, supported standing, partial straightening and finite simultaneous step tests. These step tests lift all four feet together: support the body. Balanced walking and six-leg control remain future work.
+**For Ryan's latest walking controller, use [spyder_esp32_ble_walk](firmware/spyder_esp32_ble_walk/README.md).** It adds a modeled crawl gait; real balance and hardware behavior remain unverified. For initial calibration, **start with the [four-leg BLE sketch](firmware/spyder_esp32_ble_four_leg_test/README.md).** Version 1.1 supports group arming/calibration, individual corrections, supported standing, partial straightening and finite simultaneous step tests. These step tests lift all four feet together: support the body. Physical validation of the new crawl gait and six-leg control remain future work.
 
 ## Choose a sketch
 
-Upload one sketch at a time. Download/clone the whole repository, open the matching `.ino`, and keep its companion files together. All four target ESP32; Arduino IDE is the upload tool.
+Upload one sketch at a time. Download/clone the whole repository, open the matching `.ino`, and keep its companion files together. All five target ESP32; Arduino IDE is the upload tool.
 
 | Sketch folder | Purpose | Wireless connection | PCA channels |
 |---|---|---|---|
-| [spyder_esp32_ble_four_leg_test](firmware/spyder_esp32_ble_four_leg_test/README.md) | **Current controller:** twelve-joint calibration, all-leg arming/checks, standing, partial straightening and finite simultaneous steps | **iPhone-compatible BLE**, `Spyder-4Leg-BLE` | 0–11 |
+| [spyder_esp32_ble_walk](firmware/spyder_esp32_ble_walk/README.md) | **Latest walking prototype:** shares four-leg calibration; forward/reverse/turning, finite cycles and halt | **iPhone-compatible BLE**, `Spyder-Walk-BLE` | 0–11 |
+| [spyder_esp32_ble_four_leg_test](firmware/spyder_esp32_ble_four_leg_test/README.md) | **Calibration/test controller:** twelve-joint calibration, all-leg arming/checks, standing, partial straightening and finite simultaneous steps | **iPhone-compatible BLE**, `Spyder-4Leg-BLE` | 0–11 |
 | [spyder_esp32_ble_leg_test](firmware/spyder_esp32_ble_leg_test/README.md) | Isolate one leg for alignment, direction checks and the same supported leg motions | **iPhone-compatible BLE**, `Spyder-Leg-BLE` | 0–2 |
 | [spyder_esp32_leg_test](firmware/spyder_esp32_leg_test/README.md) | Alternative one-leg controller for a Classic SPP terminal | Classic Bluetooth, `Spyder-Leg-Test`; Android/Windows | 0–2 |
 | [spyder_esp32_servo_test](firmware/spyder_esp32_servo_test/README.md) | One unloaded motor: small moves, center, timed pulse tests and one bounded sweep | Classic Bluetooth, `Spyder-Servo-Test`; Android/Windows | 0 |

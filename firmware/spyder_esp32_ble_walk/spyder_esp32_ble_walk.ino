@@ -90,7 +90,7 @@ void show(uint8_t source,bool all) {
   char text[256],selection[12];
   if(rig.selected()==fourleg::All) strcpy(selection,"all");
   else snprintf(selection,sizeof(selection),"leg %u",unsigned(rig.selected()+1));
-  snprintf(text,sizeof(text),"Spyder walk BLE v1.0 | selected=%s | %s | %s\r\n"
+  snprintf(text,sizeof(text),"Spyder walk BLE v1.1 | selected=%s | %s | %s\r\n"
     "PCA legs1=0..2 2=3..5 3=6..8 4=9..11 | SDA21 SCL22 OE23",
     selection,hasFault()?"FAULT: reset required":rig.anyAttached()?"OUTPUTS ACTIVE":"OFF",
     rig.arming()?"ARMING":rig.walking()?"WALKING":rig.coordinated()?"SYNC TEST":rig.busy()?"MOVING":"STILL");
@@ -160,7 +160,7 @@ void processCommand(uint8_t source,char *line) {
     replyText(source,"leg 1..4/all | show [all] | cal J/all | move J DEG | zero J\r\n"
       "test J OFFSET | flip J | check J/all | limits J MIN MAX\r\n"
       "speed 1..20 | armall | stand | straight | step [1..3]\r\n"
-      "walk/back/left/right [cycles] | halt: finish step, stand\r\n"
+      "walk/back/left/right [cycles] | halt: ramp down, stand\r\n"
       "stop/off/! act on ALL legs | save/load: all OFF\r\n"
       "J=0 hip,1 knee,2 foot; leg all applies to all four. Support body."); return;
   }
@@ -216,7 +216,7 @@ void setup() {
   if(!systemFault && fourleg::loadCalibration(stored)) rig.applySettings(stored);
   bluetoothReady=radio.begin("Spyder-Walk-BLE",bluetoothData,bleConnected,bleReleased);
   if(!bluetoothReady) { systemFault=true; safety.release(); }
-  replyText(0,"Spyder walk BLE v1.0; USB 115200/Newline; BLE Spyder-Walk-BLE (connect inside iPhone app)");
+  replyText(0,"Spyder walk BLE v1.1; USB 115200/Newline; BLE Spyder-Walk-BLE (connect inside iPhone app)");
   replyText(0,bluetoothReady?"All outputs OFF. Four legs use consecutive triples0..11. Send help/show.":"FAULT: Bluetooth failed to start; reset required.");
   show(0,false);
 }
@@ -236,7 +236,9 @@ void loop() {
     const bool wasBusy=rig.busy();
     rig.tick(millis());
     serviceSafetyEvents();
-    if(wasBusy && !rig.busy() && rig.anyAttached() && !hasFault()) replyText(motionSource,"Ready: target/sequence completed (commanded positions).");
+    const bool walkError=rig.takeWalkError();
+    if(walkError) replyText(motionSource,"ERR walking target rejected; all legs held. Check limits; use stop/off.");
+    else if(wasBusy && !rig.busy() && rig.anyAttached() && !hasFault()) replyText(motionSource,"Ready: target/sequence completed (commanded positions).");
   }
   delay(1);
 }
