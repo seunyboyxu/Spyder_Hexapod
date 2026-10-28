@@ -1,45 +1,38 @@
-# Development and verification
+# Building and testing the ESP32 sketches
 
-Run commands from the repository root unless stated otherwise. These commands do not upload firmware or operate motors. For operating instructions use [bring-up](bring-up.md).
-
-
-From the repository root on Linux, with Python 3, Node 20+, a C++ compiler, Chromium and Git:
+Requirements for host checks: Bash, g++ with C++11, pthread and AddressSanitizer/UndefinedBehaviorSanitizer support. No JavaScript/browser/AVR toolchain is needed.
 
 ```sh
-bash scripts/test-native.sh
-npm ci --cache /tmp/spyder-npm-cache
-npm test
-npm run test:browser
+bash scripts/test-esp32.sh
 ```
 
-The regression suites cover repeated slow nudges, continuous-traffic heartbeats, urgent STOP/Release and stale readbacks, initial-pulse synchronization and demo timing. The integration test compiles the actual C++ control/protocol/storage and connects through the browser serial adapter using host streams, without Arduino hardware. Browser tests use a labelled demo; neither substitutes for physical tests. Playwright uses `/usr/bin/chromium` when present; otherwise run `npx playwright install chromium`, or set `CHROMIUM_PATH` to an installed compatible browser.
+This runs all six published suites: single motor, Classic one leg, BLE one leg, four legs, walking and BLE core2/core3 return-type compatibility. Individual scripts are named `scripts/test-esp32-servo.sh`, `test-esp32-leg.sh`, `test-esp32-ble-leg.sh`, `test-esp32-four-leg.sh`, `test-esp32-walk.sh` and `test-esp32-ble-compat.sh`.
 
-Standard PlatformIO build:
+Portable controller/parser regression fixtures live in `tests/leg_core/` and are reused against each relevant ESP32 copy. Adapter/sketch tests use GPIO/I2C/UART/Bluetooth/FreeRTOS doubles under `tests/esp32_*`. They exercise real controller and sketch code without a device; real radio/electrical/mechanical behavior remains a bench check.
+
+## PlatformIO
+
+The root [platformio.ini](../platformio.ini) provides five independently filtered ESP32 environments. [PlatformioEntry.cpp](../firmware/PlatformioEntry.cpp) selects the nested .ino for PlatformIO; Arduino IDE opens each sketch folder directly and does not use this entry file. Default `pio run` builds the walking BLE controller. To compile all five, without uploading:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install platformio==6.1.18
-PLATFORMIO_CORE_DIR="$PWD/.platformio" .venv/bin/pio run -e uno
+python3 -m venv .tools/pio-venv
+.tools/pio-venv/bin/pip install platformio==6.1.18
+export PLATFORMIO_CORE_DIR="$PWD/.tools/platformio"
+.tools/pio-venv/bin/pio run -e esp32_servo -e esp32_classic_leg -e esp32_ble_leg -e esp32_ble_four_leg -e esp32_ble_walk
 ```
 
-PlatformIO pins `atmelavr@5.1.0` and Servo `1.2.2`. This cloud's proxy denied the PlatformIO registry; that build is not reported as passed. A verified Debian AVR toolchain provides an alternative actual ATmega328P compile:
+Pinned dependencies: espressif32 platform6.12.0 (Arduino ESP32 core2.0.17), ESP32 Dev Module, Adafruit PWM Servo Driver Library3.0.2 and BusIO1.17.4. Existing per-sketch `scripts/build-esp32-*.sh` helpers build isolated projects under ignored `.tools/`; they also compile only. Those helpers use `.tools/platformio` as PlatformIO's cache.
+
+For Arduino IDE, follow [bring-up](bring-up.md). The BLE sketches additionally compile against ESP32 core3.3.2 with the bundled BLE library. A reproducible Arduino CLI command, after installing that core and the documented Adafruit libraries, is:
 
 ```sh
-python3 scripts/bootstrap-avr.py
-python3 scripts/build-avr.py
+arduino-cli compile --fqbn esp32:esp32:esp32 firmware/spyder_esp32_ble_four_leg_test
 ```
 
-The Linux x86-64 fallback needs `curl`, `gpg`, the Debian archive keyring and `dpkg-deb`. It validates Debian signatures and package checksums, extracts tools under ignored `.tools/`, and pins Servo to its 1.2.2 commit. It uses AVR GCC 14.2 and Arduino AVR core 1.8.7, a separate configuration from PlatformIO. Output: `.pio/local-uno/spyder_uno.hex`. No script uploads or operates motors.
+Compile each sketch folder separately; never concatenate the sketches or mix companion files. Do not add upload targets to verification scripts.
 
-For actual MCU waveform regressions, install the Linux simavr development library and libelf runtime (Debian packages `libsimavr-dev` and `libelf1t64`, or your distribution equivalents), then run `python3 scripts/test-avr.py` after the AVR build. For packages extracted rather than installed, pass `--simavr-root /path/to/package-root`. The runner executes 25 scenarios, including a complete isolated unloaded sweep and writes edge traces under `.pio/avr-tests/`. This simulates ideal electrical conditions; it cannot reproduce USB supply dips or motor mechanics.
+## Before a PR
 
-See [verification results](verification.md) for exercised checks and remaining hardware work. The selected STL and native Fusion assets are now under [cad/](../cad/README.md); fitted geometry and real motion remain unverified.
+Run affected host suites, the aggregate suite, relevant actual ESP32 builds, `git diff --check` and `sha256sum -c cad/SHA256SUMS`. Check relative documentation links, selected file scope and ignored build directories. Record toolchain versions and remaining physical limitations in a dated [verification report](README.md#verification-evidence). Do not commit local toolchain configuration/proxy settings, credentials, caches, generated firmware or delivery ZIPs.
 
-
-## Repository integrity
-
-Run `sha256sum -c cad/SHA256SUMS` to check the selected CAD bytes. The [18 October handover verification](verification/2026-10-18-handover.md) records the organization checks and the unchanged calibration sources. Keep generated toolchains, environments and test output out of Git; the existing `.gitignore` covers them.
-
-## Static console releases
-
-Console 3.2 uses matching `?v=3.2` URLs for the entry module, all internal imports and CSS. Bump that asset version coherently for future browser releases, including browser tests that import the demo for controlled scenarios. Firmware protocol remains SPYDER 3 unless its wire contract changes. `Start-Console.bat` uses an absolute adjacent `web/` path and port 8033; keep it beside that folder in console-only downloads.
+Keep all five folders self-contained for Arduino IDE. When modifying a shared controller/transport behavior, inspect its copies and verify affected variants. Retain boot/reconnect off, explicit arming, per-joint bounds, complete group preflight, global interruption and no delayed command replay. Use branch/PR workflow; hardware testing and merge authorization remain with the owner.

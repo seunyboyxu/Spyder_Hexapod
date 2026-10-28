@@ -1,24 +1,28 @@
-# Hardware basis
+# ESP32 and PCA9685 hardware
 
-Current bench build: four installed legs, three servo outputs per leg, Arduino Uno and Arduino Sensor Shield V5. On 19 October the owner identified the motors as 9 g SG90s and some MG90Ds; exact quantities, manufacturer and per-joint assignments are not recorded. See [current state](project-state.md) for the pin table and [bring-up](bring-up.md) for the actual procedure.
+Current board marking: **ESP-32D, Wifi+BT, N4XX**. This indicates the original ESP32 family but does not identify the complete development board. Verified compilation target is **ESP32 Dev Module**,4MB flash, default approximately1.3MB application partition. Classic sketches require original ESP32 Bluetooth Classic; use the verified original target for BLE too. Do not assume ESP32-C3/S3/S2 or a bare module share these capabilities/pins.
 
-This list excludes printed parts and filament; the [CAD inventory](../cad/parts.csv) is separate. It is not a claim that every item has been purchased or fitted.
-
-| Item | Current milestone / status |
+| Connection | Destination |
 |---|---|
-| Arduino Uno | 1, owner-selected test controller. |
-| Sensor Shield V5 | 1, owner-confirmed connector shield; inspect actual revision and S/V/G markings. |
-| SG90 / MG90D | Owner reports 9 g SG90s plus some MG90Ds. The current software addresses twelve outputs; the eventual six-leg design needs eighteen. Record which model is connected at each pin. MG90D is the stated model, not an assumed MG90S substitution. |
-| Compatible horns and centre screws | One per servo as appropriate to the actual joint; attachment/retention still needs inspection. Use the servo's matching screw type. |
-| Passive pivots / retaining fasteners | Confirm the installed stack. Printed backing insert is in CAD; a blind hole is not a verified M2 thread specification. |
-| External regulated servo supply | Required before powered calibration; actual model, supported voltage, current capability and load measurements are still unconfirmed. |
-| Distribution / wiring / protection / switch | Size for the real combined startup/load current. Verify shield isolation to prevent backfeeding USB/Uno and retain common ground. Accessible servo-power disconnect required. |
-| Body flange hardware | Six-leg CAD reference: 24 M3 × 16 screws, 24 M3 nylocs, 48 washers (four screw positions per station). Verify installed quantities and real stack/access. |
-| USB data cable / strain relief | Needed for local firmware upload and desktop Web Serial. |
-| Foot grip and body support | Required for staged standing trials; material and surface still to be checked physically. |
+| ESP32 3V3 | PCA9685 VCC logic power |
+| ESP32 GND and external servo-supply negative | PCA9685 GND |
+| ESP32 GPIO21 / D21 | PCA9685 SDA |
+| ESP32 GPIO22 / D22 | PCA9685 SCL |
+| ESP32 GPIO23 / D23 | PCA9685 OE |
+| External regulated5V positive | PCA9685 V+ servo rail, subject to connector/trace ratings |
 
-The earlier ESP32, two PCA9685 boards, regulators/battery and full six-leg BOM remain design proposals in the [archived handover](archive/2026-10-16-SPYDER-CODEX-HANDOVER.md). They are not installed requirements for this Uno sketch. No whole-robot power budget or final battery/fuse/wire sizing has been validated.
+Keep PCA address jumpers open for0x40. Read signal/V+/GND labels rather than guessing connector orientation. VCC stays3.3V so I2C pull-ups do not apply5V to ESP32 pins. PCA nominal frequency is50.03Hz using assumed25MHz oscillator and prescale121; oscillator accuracy and real pulse widths need measurement.
 
-## Unloaded test defaults
+OE is active LOW. Fit a pull-up to3V3 and verify it holds near3.3V during reset with servo power off. A10k pull-up is suitable only if actual board bias permits. Against a confirmed10k board pull-down, use1k pull-up:10k/10k yields only1.65V, whereas1k/10k yields about3.0V. Identify unknown circuitry before energizing servos; do not ground OE permanently.
 
-The [unloaded calibration controls](unloaded-servo-calibration.md) center one motor and sweep one explicit pulse window. After identifying SG90 and MG90D motors without datasheets, the owner chose the existing **1000–2000 µs defaults** and **1500 µs nominal center**. These are the selected software envelope, not verified full-travel specifications for either motor. No wider manufacturer claim is made; manufacturer pages were inaccessible through this environment's proxy. Use smaller endpoints if physical behavior requires it, and recalibrate assembled travel after refitting.
+Four-leg PCA map:1=0/1/2,2=3/4/5,3=6/7/8,4=9/10/11, in hip/knee/foot order. Channels12–15 stay off. One-leg sketches use0–2; unloaded motor sketch uses0 only. These are PCA output channels, not ESP32 GPIOs.
+
+## Power
+
+The confirmed small rectangular PP3 9V battery →5V/3A buck is inadequate for powered multi-servo tests. A3A output at5V is15W and requires roughly2A at9V after typical losses, beyond a PP3's sustained capability; twelve servo peaks can also exceed3A. Staged activation cannot fix inadequate supply capacity.
+
+Use an external regulated5V source and distribution sized for combined starting/stall demand with margin. Check actual servo ratings and PCA terminal/trace ratings; do not route excessive current through thin jumpers or an underrated board rail. Start with ESP32 on USB and separate servo power, common ground. Motor current must not pass through ESP32 3V3, its regulator or the PC USB supply.
+
+The PCA9685 distributes external servo power and does not regulate an ESP32 supply. A suitable regulated5V source may later supply two parallel branches, one to V+ and one to the development board's documented5V input, after checking that board's USB/external-power isolation. Never5V into3V3; do not parallel external5V and USB unless the board supports it.
+
+Keep motor power off for wiring/upload/reset, support the body, and keep a physical servo-supply switch accessible. OFF removes signal, not electrical power or guaranteed holding torque. First attachment may jump from an unknown shaft position. Verify horn retention and free travel before loaded tests.

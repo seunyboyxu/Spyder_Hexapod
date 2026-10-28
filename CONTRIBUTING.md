@@ -1,9 +1,7 @@
 # Continuing Spyder
 
-Read [the contributor handover](docs/handover.md), [current state](docs/project-state.md) and [project plan](docs/project-plan.md). Use the existing checkout/branch and preserve local changes. Keep the four-leg Uno milestone separate from future six-leg firmware.
+Start with [current state](docs/project-state.md), [handover](docs/handover.md) and the [firmware guide](docs/firmware-guide.md). All active firmware targets the original ESP32 and PCA9685. Preserve each sketch's independent Arduino IDE folder and use a feature branch and pull request.
 
-For software changes, run the affected regression first, then the [development checks](docs/development.md). Firmware and browser protocol changes must be coordinated; retain detached/held startup, limits, heartbeat hold, explicit arming, urgent STOP/Release and stale-response protection. Build/test commands must not automatically upload or actuate hardware.
+Run the affected suite, then `bash scripts/test-esp32.sh` and relevant [ESP32 builds](docs/development.md). Keep output-off startup, explicit arming, per-joint limits, atomic group validation, bounded inputs and global STOP/OFF/disconnect handling. Do not upload firmware or actuate hardware from build/test commands. Physical claims need recorded measurements or owner observations.
 
-For CAD changes, preserve editable sources and print exports together. Follow the [CAD editing guide](cad/README.md), update the part map/manifests and state which physical fit checks were actually performed. Do not overwrite the selected print files with a historical revision merely because it has a similar filename.
-
-For physical work, use [bring-up](docs/bring-up.md), fill a [calibration log](docs/templates/calibration-log.md) and export the real profile. Distinguish measured outcomes, simulation results, historical claims and planned work. Redact credentials or unrelated personal information from new logs before committing them.
+Keep selected CAD exports and native sources together. Follow the [CAD guide](cad/README.md), retain provenance, and update manifests only when the assets actually change. Record physical calibration using the [log template](docs/templates/calibration-log.md). Do not commit toolchains, credentials, machine-specific configuration, generated builds or delivery ZIPs.

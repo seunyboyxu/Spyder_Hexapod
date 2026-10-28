@@ -1,51 +1,25 @@
 # Contributor handover
 
-Start with [current state](project-state.md), then [project plan](project-plan.md). These describe the current four-leg Uno milestone; the [original CAD handover](archive/2026-10-16-SPYDER-CODEX-HANDOVER.md) is historical and contains superseded ESP32-first instructions.
+Start at [README](../README.md) and [current state](project-state.md). The active controller is **firmware/spyder_esp32_ble_four_leg_test**, v1.1, using original ESP32 BLE and PCA9685 channels0–11. Ryan's latest walking prototype is **firmware/spyder_esp32_ble_walk**, BLE **Spyder-Walk-BLE**, with shared four-leg calibration and modeled crawl/turn commands. See its README and the walking merge verification before use. Other ESP32 folders isolate one leg or one unloaded motor and remain separate upload choices. Read the [function guide](firmware-guide.md) before changing copies of shared modules.
 
-## First session
+The owner uses Arduino IDE, an iPhone, SDA GPIO21/SCL GPIO22, and consecutive channel triples hip/knee/foot. BLE app connection is inside Bluefruit Connect UART or nRF Connect with TX notifications. Classic SPP sketches are Android/Windows alternatives. ESP32 board marking is ESP-32D, Wifi+BT, N4XX; the complete board model and power-isolation circuit remain unidentified.
 
-1. Inspect the current branch and working tree; preserve changes. Read [hardware/bring-up](bring-up.md) before attaching power.
-2. Explore the browser demo with no hardware: from the repository root run `python3 -m http.server 8000 --bind 127.0.0.1 --directory web`, open `http://localhost:8000` in desktop Chrome/Edge, then select **Try demo**. Node/npm is needed for development tests, not to serve the console.
-3. Run [development checks](development.md). Firmware and UI must both use `SPYDER 3`; JSON/EEPROM stay version 1. Do not automatically upload firmware or move motors as a test step.
-4. Find the selected [STLs and native Fusion sources](../cad/README.md). Use the part map; six-leg CAD is not evidence of fitted six-leg electronics or functioning firmware.
-5. Take the next incomplete item in the [project plan](project-plan.md). The immediate hardware prerequisites are external servo power and one retained, freely moving joint.
+The latest group workflow is leg all → cal all → small joint tests/individual corrections → return to reference → explicit check all → off/save. Subsequent checked armall prepares supported poses/finite simultaneous steps. Preserve all-off boot, separate per-leg settings, atomic group preflight, finite sequences and global STOP/OFF/disconnect cancellation. Do not invent measured positions or automatic direction detection.
 
-## Where to work
+Current PP3 battery/5V3A buck is inadequate. Supply, OE/reset behavior, actual iPhone interoperability, fitted geometry, joint clearance and loaded motion require physical verification. See [hardware](hardware.md), [bring-up](bring-up.md), [plan](project-plan.md) and [log template](templates/calibration-log.md). No firmware upload or motor actuation should be performed by a cloud agent.
 
-| Area | Entry point |
-|---|---|
-| Arduino sketch and output adapter | [spyder_uno.ino](../firmware/spyder_uno/spyder_uno.ino) |
-| Pulse limits, movement, hold/watchdog and pose | [Control.cpp](../firmware/spyder_uno/Control.cpp) |
-| Commands/readback | [Protocol.cpp](../firmware/spyder_uno/Protocol.cpp), [protocol reference](protocol.md) |
-| EEPROM validity/persistence | [Storage.cpp](../firmware/spyder_uno/Storage.cpp) |
-| Serial ownership, queue and urgent controls | [session.js](../web/session.js) |
-| UI / demo | [app.js](../web/app.js), [demo.js](../web/demo.js) |
-| Native / JS / browser / MCU regressions | [tests](../tests/), [development guide](development.md) |
-| Physical wiring, arming, calibration and standing sequence | [bring-up.md](bring-up.md) |
-| Measured calibration record to fill in | [template](templates/calibration-log.md); export actual JSON from the console |
-| Print/native correspondence and recovery gaps | [CAD guide](../cad/README.md), [parts.csv](../cad/parts.csv) |
-| Original GitHub and licensing provenance | [upstream reference](reference/upstream.md) |
+On28 October2026 the owner explicitly requested all ESP32 work be published and legacy board files removed. Old code and browser tooling remain recoverable through Git history, rather than in the active tree. Development uses a branch and pull request; do not merge or push directly to main without authorization. Follow [development checks](development.md) and [contribution guidance](../CONTRIBUTING.md).
 
-## Rules that prevent repeating earlier mistakes
+## CAD and upstream
 
-Retain D2–D13 and the owner's power-off procedure for connection/reset/upload. Do not move signals to D0/D1 or silently substitute A0. Do not power twelve servos through Uno USB. A Sensor Shield V5 distributes connectors; it is not a high-current supply or feedback sensor.
-
-Startup/reset must remain detached and held. PING cannot resume a STOP. STOP holds command signals; Release drives detached outputs LOW and can let the robot drop. First ARM can jump because actual shaft angle is unknown. ±5 changes the outstanding target, and other armed joints can finish their own transitions.
-
-Keep firmware/console revisions together. Export actual calibration before changes, document its physical leg labels, and save explicitly while released. Do not invent standing angles or mark simulated pulses as measured joint positions.
-
-## Sources and unresolved access
-
-This repository consolidates the current conversation, the original uploaded handover and the owner's GitHub CAD upload. The additional [shared conversation](https://chatgpt.com/s/cx_6ad506e1089881918fe6e9d6769453ea) returned a proxy access denial on 18 October 2026 and was not read. Its contents have not been invented or claimed as incorporated. Add any extra decisions/files when its text or exports are available.
-
-The original handover references Windows-local STEP/Fusion/fit/BOM packages not present in this checkout. Their names and recovery locations remain in that archived source; the [CAD guide](../cad/README.md) explains the important missing editable parts. Archive claims about inspection/fit refer to their original date and are not fresh physical validation.
+[Selected STLs and Fusion sources](../cad/README.md) retain their exact bytes/provenance. Six of seven printed parts have named editable counterparts in the native archives; the backing-pivot source is still missing. [Original GitHub](reference/upstream.md): hpsaturn/quadpod at pinned commit e4a7f0efd0447abaa603074676545080f0f3187b. It is a reference, not a drop-in controller/calibration for this wiring.
 
 ## Recovery folder supplied by the owner
 
-The owner identified this additional project folder on 18 October:
+The owner supplied this Windows folder for additional project files:
 
 ```text
 C:\Users\seun_\OneDrive - The University of Manchester\Robotics Scoiety\FInalnd Hackathon
 ```
 
-This is a Windows-local/OneDrive-synced path, not a mounted path in the cloud checkout. Its contents have not been read. Transfer a ZIP of the relevant project CAD, STEP/Fusion, fit notes and BOM files into the workspace to reconcile it with the manifest; do not assume it contains a particular missing file until inspected. The spelling/capitalization above is preserved exactly as supplied.
+It is not mounted in this cloud workspace. The extra shared conversation was also inaccessible. Do not claim those files were inspected or incorporated. Recover additional fit packages, the missing-pivot STEP or new decisions explicitly and record source/version/physical checks before adding them.
