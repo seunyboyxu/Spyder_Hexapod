@@ -12,6 +12,7 @@
 
 ## Verification evidence
 
+- [quadpod crawl gait sketch](verification/2026-10-28-esp32-crawl.md) — new crawl folder, host evidence, outstanding ESP32 compile.
 - [Ryan walking integration and merge](verification/2026-10-28-esp32-walk-merge.md) — latest walking checks and package provenance.
 
 - [ESP32 publication and cleanup checks](verification/2026-10-28-esp32-publication.md) — current repository-wide checks.
