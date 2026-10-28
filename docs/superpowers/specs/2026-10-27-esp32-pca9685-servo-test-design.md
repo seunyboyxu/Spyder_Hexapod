@@ -1,6 +1,6 @@
 # ESP32 Bluetooth and PCA9685 single-servo test
 
-Status: proposed for owner review; no ESP32 firmware written or uploaded yet.
+Status: approved by owner in chat on 27 October 2026; implemented as a local test candidate. No hardware upload or GitHub push.
 
 ## Purpose and scope
 
@@ -51,7 +51,7 @@ Disconnect power while wiring. Do not connect the old Sensor Shield or HC-05.
 
 Check the actual board's printed signal/V+/GND labels; connector orientation varies. Use default I2C address 0x40 with address jumpers open. Nominal PWM frequency is 50 Hz. PCA9685's oscillator and 12-bit tick rounding mean physical pulse widths need measurement for precision. The implementation must round electrical endpoints inward so nominal requests remain within the configured pulse envelope at its assumed clock.
 
-OE is active LOW. The external pull-up keeps it disabled while GPIO23 is high impedance on reset. Before enabling, explicitly initialize all channels full-off and preload channel 0. Firmware alone cannot guarantee output behavior through every partial-power or wiring failure. Keep servo power off for wiring/upload/reset and keep an accessible supply switch.
+OE is active LOW. The external pull-up must hold it HIGH while GPIO23 is high impedance on reset. Implementation wiring clarification: confirm the actual board's OE pull-down; 10 kΩ up against 10 kΩ down is insufficient. Where a 10 kΩ board pull-down is confirmed, use a 1 kΩ external pull-up instead, and verify idle OE near 3.3 V with servo power off. Do not energise with an unverified OE bias. Before enabling, explicitly initialize all channels full-off and preload channel 0. Firmware alone cannot guarantee output behavior through every partial-power or wiring failure. Keep servo power off for wiring/upload/reset and keep an accessible supply switch.
 
 ## Power
 

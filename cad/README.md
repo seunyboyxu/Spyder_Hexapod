@@ -37,7 +37,7 @@ No geometry conversion or new `.f3d` was fabricated during this organization.
 
 ## Missing backing-pivot source and fit revisions
 
-The [original handover](../docs/archive/2026-10-16-SPYDER-CODEX-HANDOVER.md) identifies `models/Insert_body.stl` in [quadpod](../docs/reference/upstream.md) as the source family. The uploaded print is a grounded export with different bytes from the pinned upstream mesh; an exact-file match is not claimed.
+The [original handover](../docs/reference/cad-history.md) identifies `models/Insert_body.stl` in [quadpod](../docs/reference/upstream.md) as the source family. The uploaded print is a grounded export with different bytes from the pinned upstream mesh; an exact-file match is not claimed.
 
 The handover's prior output folder `SG90-missing-backing-pivot/` and `SG90-missing-backing-pivot.zip` reportedly contain an editable STEP, but neither was uploaded here. Recover that package from the original project machine/conversation, inspect the STEP against this print, then add it under `cad/step/` with provenance. The owner has since supplied a [Windows recovery folder](../docs/handover.md#recovery-folder-supplied-by-the-owner); its contents are not accessible from this cloud workspace until transferred. No standalone backing-pivot `.f3d` has been found. A mesh conversion would be a newly reconstructed source, not recovery of the original.
 

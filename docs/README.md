@@ -1,18 +1,23 @@
 # Documentation map
 
-| Read when… | Document |
+| Need | Document |
 |---|---|
-| You need the current hardware/software status | [Current state](project-state.md) |
-| You are taking over the project | [Contributor handover](handover.md) |
-| You need the next milestones and acceptance criteria | [Project plan](project-plan.md) |
-| You are centering/sweeping a motor removed from the leg | [Unloaded servo setup](unloaded-servo-calibration.md) |
-| You are uploading/calibrating on the actual Uno | [Bring-up and calibration](bring-up.md) |
-| You need the current hardware basis | [Hardware](hardware.md) |
-| You are developing or reproducing checks | [Development](development.md) |
-| You need command/storage behavior | [Protocol/software reference](protocol.md) |
-| You need the selected STLs/editable sources | [CAD guide](../cad/README.md) |
-| You need the old GitHub and source attribution | [Upstream reference](reference/upstream.md) |
-| You need evidence | [Console asset delivery](verification/2026-10-19-console-assets.md), [connection diagnostic patch](verification/2026-10-19-connection-diagnostics.md), [revision 3 verification](verification/2026-10-19-unloaded-servo.md), [revision 2 history](verification.md), [handover verification](verification/2026-10-18-handover.md) |
-| You are recording a physical test | [Calibration log template](templates/calibration-log.md) |
+| Choose the current sketch | [Root README](../README.md), [sketch index](../firmware/README.md) |
+| Understand functions, commands, storage and safety | [Firmware guide](firmware-guide.md) and each sketch README |
+| Current status / next steps / takeover | [State](project-state.md), [plan](project-plan.md), [handover](handover.md) |
+| Wiring / upload / physical test record | [Hardware](hardware.md), [bring-up](bring-up.md), [log](templates/calibration-log.md) |
+| Build and test | [Development](development.md) |
+| Print and edit CAD | [CAD guide](../cad/README.md), [CAD recovery history](reference/cad-history.md) |
+| Original project and licensing | [Upstream](reference/upstream.md) |
 
-[Archive](archive/) contains the original handover and revision 1 audit. [Superpowers plans/specifications](superpowers/) preserve the software design history. Their historical status and old hardware proposals do not override the current state or owner decisions.
+## Verification evidence
+
+- [ESP32 publication and cleanup checks](verification/2026-10-28-esp32-publication.md) — current repository-wide checks.
+- [Four-leg group calibration v1.1](verification/2026-10-28-four-leg-group-calibration.md).
+- [Four-leg controller baseline](verification/2026-10-27-esp32-four-leg-test.md).
+- [BLE String compatibility](verification/2026-10-27-ble-string-compatibility.md).
+- [BLE one-leg baseline](verification/2026-10-27-esp32-ble-leg-test.md).
+- [Classic one-leg baseline](verification/2026-10-27-esp32-leg-test.md).
+- [Unloaded motor baseline](verification/2026-10-27-esp32-servo-test.md).
+
+Dated reports describe the tested snapshot at the time. Their historical references to preserved legacy files or an earlier publication pause are superseded by the current state. The active repository has ESP32 source/tests only. Software evidence is not a physical motion or power-supply validation.

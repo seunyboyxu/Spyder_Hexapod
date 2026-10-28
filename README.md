@@ -1,68 +1,59 @@
-# Spyder robot
+# Spyder — ESP32 + PCA9685 robot tests
 
-Spyder is a six-leg mechanical robot project currently testing **four installed legs, twelve servo outputs for SG90/MG90D motors, an Arduino Uno and Sensor Shield V5**. This repository contains the motor-calibration firmware, a desktop browser console, selected print STLs, native Fusion 360 assemblies and the continuation handover.
+Spyder is a six-leg mechanical robot project currently developing with **four legs and twelve positional servos**, an **original ESP32** and a **PCA9685**. The current controller uses **BLE for iPhone commands**, with USB serial available for setup and diagnostics.
 
-**Current milestone:** revision 3 calibration software is tested in software and MCU simulation. Real-board calibration, load-tested standing without slipping and six-leg walking remain to be demonstrated. Read [current state](docs/project-state.md) before the historical six-leg/ESP32 proposal.
+**Start with the [four-leg BLE sketch](firmware/spyder_esp32_ble_four_leg_test/README.md).** Version 1.1 supports group arming/calibration, individual corrections, supported standing, partial straightening and finite simultaneous step tests. These step tests lift all four feet together: support the body. Balanced walking and six-leg control remain future work.
 
-## Start here
+## Choose a sketch
 
-| Goal | Read |
-|---|---|
-| Take over the project | [Contributor handover](docs/handover.md) |
-| Understand what works and what is missing | [Current state](docs/project-state.md) |
-| Continue the work | [Project plan](docs/project-plan.md) |
-| Center or sweep a motor removed from the leg | [Unloaded servo instructions](docs/unloaded-servo-calibration.md) |
-| Upload and calibrate assembled legs | [Bring-up and calibration instructions](docs/bring-up.md) |
-| Find print files and editable Fusion counterparts | [CAD guide and part map](cad/README.md) |
-| Build/test or change the software | [Development](docs/development.md), [protocol](docs/protocol.md) |
-| Find the original GitHub | [hpsaturn/quadpod and provenance](docs/reference/upstream.md) |
+Upload one sketch at a time. Download/clone the whole repository, open the matching `.ino`, and keep its companion files together. All four target ESP32; Arduino IDE is the upload tool.
 
-## Try the console
+| Sketch folder | Purpose | Wireless connection | PCA channels |
+|---|---|---|---|
+| [spyder_esp32_ble_four_leg_test](firmware/spyder_esp32_ble_four_leg_test/README.md) | **Current controller:** twelve-joint calibration, all-leg arming/checks, standing, partial straightening and finite simultaneous steps | **iPhone-compatible BLE**, `Spyder-4Leg-BLE` | 0–11 |
+| [spyder_esp32_ble_leg_test](firmware/spyder_esp32_ble_leg_test/README.md) | Isolate one leg for alignment, direction checks and the same supported leg motions | **iPhone-compatible BLE**, `Spyder-Leg-BLE` | 0–2 |
+| [spyder_esp32_leg_test](firmware/spyder_esp32_leg_test/README.md) | Alternative one-leg controller for a Classic SPP terminal | Classic Bluetooth, `Spyder-Leg-Test`; Android/Windows | 0–2 |
+| [spyder_esp32_servo_test](firmware/spyder_esp32_servo_test/README.md) | One unloaded motor: small moves, center, timed pulse tests and one bounded sweep | Classic Bluetooth, `Spyder-Servo-Test`; Android/Windows | 0 |
 
-Download/clone this repository. **On Windows, double-click `Start-Console.bat`**, leave its window running and open `http://127.0.0.1:8033/?console=3.2` in desktop Chrome or Edge. The page should show **Console 3.2 · Firmware 3**. The launcher serves the `web/` folder next to itself, even when started from another working directory. Keep your existing revision 3 sketch.
+See the [firmware/function guide](docs/firmware-guide.md) for command tables, important source functions and differences between the sketches. Classic SPP versions do not connect through ordinary iPhone serial apps; use a BLE version for iPhone.
 
-Alternatively, from the project folder on the computer running desktop Chrome or Edge:
+## Wiring and upload
 
-```sh
-python3 -m http.server 8000 --bind 127.0.0.1 --directory web
-```
+- ESP32 GPIO21 → SDA, GPIO22 → SCL, GPIO23 → OE.
+- ESP32 3V3 → PCA9685 VCC. Common GND; external regulated 5 V → servo V+.
+- OE needs a verified pull-up to 3V3 to inhibit outputs during reset; see the [hardware guide](docs/hardware.md).
+- Arduino IDE: **ESP32 Dev Module**, **esp32 by Espressif Systems**, **Adafruit PWM Servo Driver Library 3.0.2** and **Adafruit BusIO 1.17.4**. USB Serial Monitor: **115200, Newline**. See [bring-up](docs/bring-up.md) for exact versions and steps.
 
-On Windows, use `python` if that is your Python command. Open `http://localhost:8000` and choose **Try demo** to explore without hardware. No npm installation is needed to serve the console. For the real Uno, first follow [bring-up](docs/bring-up.md), upload [`spyder_uno.ino`](firmware/spyder_uno/spyder_uno.ino) with **Servo 1.2.2**, close Serial Monitor and select **Connect Uno**. Upload the revision 3 sketch and use the matching console together; old firmware is rejected.
+The confirmed **PP3 9 V battery with a 5 V/3 A buck is inadequate for powered multi-servo tests**. Replace the source and distribution with equipment sized for combined starting/stall current. The PCA9685 distributes external servo power; it does not regulate power for the ESP32. Keep servo power off during wiring/upload/reset.
 
-**Before powered calibration:** twelve servos must not draw power through Uno USB. Use a suitable external regulated servo supply, shared ground and verified shield rail/jumper isolation. Keep servo power off during USB connection, reset and upload. The owner chose to retain D13, which the Uno bootloader can toggle before the sketch starts. Support the body; first ARM can jump to its explicit pulse and Release can let the robot drop.
+## Four-leg workflow
 
-## Center and sweep an unloaded servo
+Legs use consecutive hip/knee/foot triples: leg1=0/1/2, leg2=3/4/5, leg3=6/7/8, leg4=9/10/11. Channels12–15 stay off.
 
-In **Unloaded servo setup**, select one signal, confirm the motor is removed from its leg, use **Resume controls**, then **Center selected at 90°**. This commands a nominal **1500 µs**, without measuring the shaft angle. Once centered, **Sweep selected range** makes one pass from center to minimum, maximum and back to center. The owner chose the existing **1000–2000 µs defaults** for the SG90/MG90D motors; full mechanical travel is not guaranteed.
-
-Only the selected output is attached. STOP or heartbeat loss cancels the sweep; Resume never restarts it. Release before choosing another motor. Saved leg limits stay unchanged, but the selected travel-check flag and standing record are cleared in RAM. After refitting horns/motors, repeat supported assembled-leg calibration. See the [full procedure](docs/unloaded-servo-calibration.md).
-
-## Signal map and controls
-
-| Wiring group | Proximal / middle / distal | Joint IDs |
-|---|---|---|
-| L0 | D2 / D3 / D4 | 0 / 1 / 2 |
-| L1 | D5 / D6 / D7 | 3 / 4 / 5 |
-| L2 | D8 / D9 / D10 | 6 / 7 / 8 |
-| L3 | D11 / D12 / D13 | 9 / 10 / 11 |
-
-D0/D1 stay free for USB serial. Labels preserve wire order; physical front/stations and joint axis names still need recording. The shield supplies connectors, not high-current power or position feedback.
-
-The console deliberately arms one joint at a time, moves within per-joint limits at 10–100 µs/s, and stores calibration in EEPROM/JSON. STOP latches hold; Resume does not restart old targets. Release detaches signals and drives them LOW. Standing capture stores commanded pulses after all twelve joints are checked, attached and stationary; playback does not balance the robot. Use the full [one-servo → one-leg → twelve-joint → standing procedure](docs/bring-up.md) and [calibration log](docs/templates/calibration-log.md).
-
-## Repository layout
+After wiring/power checks and supporting the body, send each command separately:
 
 ```text
-cad/                  Selected print STLs, native Fusion files, part map and hashes
-firmware/spyder_uno/   Uno sketch, control, serial protocol and EEPROM storage
-web/                  Web Serial console and hardware-free demo
-tests/                Native C++, JS/integration, browser and AVR waveform checks
-scripts/              Test runners and signed AVR toolchain/build helpers
-docs/                 State, plan, calibration, development, references and archive
+leg all
+speed 5
+cal all
 ```
 
-[Revision 3 verification](docs/verification/2026-10-19-unloaded-servo.md) records native checks, 36 JavaScript tests, 14 browser tests and 25 compiled-AVR scenarios, including an isolated one-cycle output sweep. [Revision 2 verification](docs/verification.md) is retained as history. [Handover verification](docs/verification/2026-10-18-handover.md) records the later organization and fresh checks. The later [connection diagnostic patch](docs/verification/2026-10-19-connection-diagnostics.md) passes 39 JavaScript tests and 17 browser tests and preserves startup failure reasons; its firmware is unchanged. These are software results, not a physical standing demonstration.
+Wait for Ready. `cal all` explicitly arms at individual references, one joint every100ms, without requiring previous checks. `test J 5` tests the four matching joints; `test J 0` returns them. J=0 hip,1 knee,2 foot. Select `leg N` for individual corrections. After physically confirming all twelve at reference, `check all` records your confirmation. Use `off` then `save` to retain calibration. Later, checked `armall` prepares for `stand`, `straight` or `step 1`. Follow the [complete calibration procedure](firmware/spyder_esp32_ble_four_leg_test/README.md) before motion.
 
-The two Fusion archives contain named editable counterparts for six of the seven selected print parts. The backing-pivot editable source and later fit packages still need recovery; the [CAD guide](cad/README.md) marks the gap and explains editing limitations. The [owner's Windows recovery folder](docs/handover.md#recovery-folder-supplied-by-the-owner) is documented but not readable from this cloud environment.
+`stop` cancels motion and holds all legs; `off` or urgent `!` releases all signals. BLE disconnect/unsubscribe also releases all. Reconnection never resumes motion.
 
-The additional shared-chat link could not be read here; its contents have not been claimed as incorporated. The original supplied Markdown is preserved in [the archive](docs/archive/2026-10-16-SPYDER-CODEX-HANDOVER.md), with later decisions summarized in the current state. See [contribution guidance](CONTRIBUTING.md) and [source/license attribution](docs/reference/upstream.md).
+## Project and handover
+
+| Need | Guide |
+|---|---|
+| Current state, verified limits and remaining work | [Project state](docs/project-state.md), [project plan](docs/project-plan.md) |
+| Continue development | [Handover](docs/handover.md), [development](docs/development.md), [contributing](CONTRIBUTING.md) |
+| Functions, commands, storage and source layout | [Firmware guide](docs/firmware-guide.md), [sketch index](firmware/README.md) |
+| Wiring and first upload | [Hardware](docs/hardware.md), [bring-up](docs/bring-up.md) |
+| Selected STLs and editable Fusion counterparts | [CAD guide](cad/README.md) |
+| Original example project and attribution | [hpsaturn/quadpod reference](docs/reference/upstream.md) |
+| Software evidence and physical-test log | [Verification index](docs/README.md), [calibration log](docs/templates/calibration-log.md) |
+
+The active source tree contains ESP32 sketches only. Legacy Uno/Sensor Shield firmware, its browser console and AVR tooling have been removed; previous versions remain in Git history. Arduino IDE/framework references here apply to the ESP32 toolchain.
+
+Software tests and compiled builds are documented separately from hardware results. Actual iPhone radio behavior, reset/OE bias, supply performance and loaded mechanical motion still need bench verification.

@@ -1,0 +1,10 @@
+# iPhone BLE compatibility fix for the one-leg controller
+
+Root cause: the existing `spyder_esp32_leg_test` uses BluetoothSerial/Classic SPP. Ordinary iOS UART terminal apps cannot use that profile. Convert the wireless transport to BLE Nordic UART Service; preserve the established leg controller, PCA9685 adapter, calibration/geometry, save/load, USB115200, GPIO21/22 I2C, GPIO23 OE and channels0/1/2. No new hardware is required.
+
+Create a separate complete Arduino folder `firmware/spyder_esp32_ble_leg_test/`, preserving the Classic candidate. Use the ESP32 Arduino2.0.17 bundled BLE library and standard service6E400001-B5A3-F393-E0A9-E50E24DCCA9E, RX0002(write/write without response) and TX0003(notify). Advertise `Spyder-Leg-BLE`; connect inside an iPhone BLE UART app, not iOS Settings. Notify subscription is required for wireless movement commands; safety release works without subscription. Disconnection/unsubscription inhibits OE and cancels pending motion; reconnection/subscription never activates outputs. Restart advertising from the loop. Reply chunks must fit the default23-byte ATT MTU (20-byte payload), paced in the reply worker; errors must not block motor servicing. Keep bounded RX and UART error detection. Reject stale-session TX replies.
+
+- [x] Add failing BLE transport and actual-sketch checks for NUS service/properties, subscription, fragmented RX commands,20-byte TX chunks, session changes, advertising restart and disconnect/arm safety.
+- [x] Copy the leg core/PCA/parser/storage unchanged; implement only the BLE UART adapter and wireless integration. Add iPhone setup instructions and retain the calibration/motion guide.
+- [x] Run sanitizer checks, actual original-ESP32 Arduino compile/link, the existing39-test console suite, and an independent read-only review. Fix material findings with regression checks.
+- [x] Package the full BLE Arduino sketch and verification note in a new ZIP. No physical upload, radio/iPhone success claim or GitHub push before owner testing.
