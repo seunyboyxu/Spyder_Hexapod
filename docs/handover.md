@@ -1,6 +1,6 @@
 # Contributor handover
 
-Start at [README](../README.md) and [current state](project-state.md). The active controller is **firmware/spyder_esp32_ble_four_leg_test**, v1.1, using original ESP32 BLE and PCA9685 channels0–11. Other ESP32 folders isolate one leg or one unloaded motor and remain separate upload choices. Read the [function guide](firmware-guide.md) before changing copies of shared modules.
+Start at [README](../README.md) and [current state](project-state.md). The active controller is **firmware/spyder_esp32_ble_four_leg_test**, v1.1, using original ESP32 BLE and PCA9685 channels0–11. Ryan's latest walking prototype is **firmware/spyder_esp32_ble_walk**, BLE **Spyder-Walk-BLE**, with shared four-leg calibration and modeled crawl/turn commands. See its README and the walking merge verification before use. Other ESP32 folders isolate one leg or one unloaded motor and remain separate upload choices. Read the [function guide](firmware-guide.md) before changing copies of shared modules.
 
 The owner uses Arduino IDE, an iPhone, SDA GPIO21/SCL GPIO22, and consecutive channel triples hip/knee/foot. BLE app connection is inside Bluefruit Connect UART or nRF Connect with TX notifications. Classic SPP sketches are Android/Windows alternatives. ESP32 board marking is ESP-32D, Wifi+BT, N4XX; the complete board model and power-isolation circuit remain unidentified.
 

@@ -1,6 +1,6 @@
 # ESP32 firmware and function guide
 
-All four sketches use an original ESP32, a PCA9685 at0x40, SDA21/SCL22/OE23 and USB115200/Newline. Each sketch is independently uploadable through Arduino IDE. Choose a complete folder from the [sketch index](../firmware/README.md); files from different folders are not interchangeable.
+All five sketches use an original ESP32, a PCA9685 at0x40, SDA21/SCL22/OE23 and USB115200/Newline. Each sketch is independently uploadable through Arduino IDE. Choose a complete folder from the [sketch index](../firmware/README.md); files from different folders are not interchangeable.
 
 ## Single unloaded servo
 
@@ -85,3 +85,11 @@ The sketches deliberately keep companion modules in their own folder for Arduino
 The motor tester maps nominal0/90/180° to1000/1500/2000µs. Leg sketches retain the544–2400µs angle scale, so90° requests1472µs, with output independently restricted to1000–2000µs. Do not transfer nominal angle calibrations between those scales. Leg defaults: zero90°, raw limits60–120°, absolute permitted45–140°. Nothing measures actual shaft position or discovers end stops.
 
 Estimated link lengths are27.5/55/74mm. Stand target is(85,0,-60)mm and partial straight target(125,0,-30)mm; local step is20mm end-to-end with12mm lift. Measure the fitted geometry before relying on these targets. Four-leg simultaneous steps lift all feet and require external body support; balanced gait and six-leg motion are unimplemented.
+
+## Walking prototype — Ryan's latest work
+
+Folder: [spyder_esp32_ble_walk](../firmware/spyder_esp32_ble_walk/README.md); BLE name **Spyder-Walk-BLE**. This keeps the four-leg v1.1 calibration/test commands, channel map and shared spyder-four/cal record, and adds walk/back/left/right with optional1–100 cycles. Without a count, walking continues until halt/stop/off. `halt` ramps down and returns to stand; stop holds immediately and off/! releases all. BLE loss releases all outputs.
+
+`WalkConfig.h` holds assumed mount angles/radius, stride, lift, shift, cycle timing and speed cap. `walk::homeFoot()/toLeg()` transform body/leg coordinates. `walk::Gait::walk()/update()/stop()` generate the one-foot-at-a-time crawl and direction/stop transitions. `FourLegTest::walkCommand()/walkFits()/tickWalk()/trackAll()` validate and service the walking state. `LegTest::canTrack()/track()` map Cartesian targets through each leg's calibration and cap updates. The normal `speed` command affects calibration/test poses; walking uses its separate configured cap/timing.
+
+Support-triangle margins are mathematical checks assuming the configured geometry and body-centred mass; they do not prove a real robot is balanced. Measure actual stations/link lengths, verify directions and replace the inadequate power supply before hardware testing. Start with finite `walk 1` and external support. See [walking verification](verification/2026-10-28-esp32-walk-merge.md).

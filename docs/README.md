@@ -12,6 +12,8 @@
 
 ## Verification evidence
 
+- [Ryan walking integration and merge](verification/2026-10-28-esp32-walk-merge.md) — latest walking checks and package provenance.
+
 - [ESP32 publication and cleanup checks](verification/2026-10-28-esp32-publication.md) — current repository-wide checks.
 - [Four-leg group calibration v1.1](verification/2026-10-28-four-leg-group-calibration.md).
 - [Four-leg controller baseline](verification/2026-10-27-esp32-four-leg-test.md).
